@@ -11,7 +11,7 @@ import { ArrowLeft, Save } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 // Define known preset values outside the component for reuse
-const KNOWN_STYLES = ["diderot", "balzac", "proust", "camus", "vian", "contemporary"];
+const KNOWN_STYLES = ["diderot", "balzac", "proust", "camus"];
 const KNOWN_PERSONALITIES = ["playful", "philosophical", "ironic", "dramatic", "absurd"];
 // Add Known Narrator Types
 const KNOWN_NARRATOR_TYPES = [
@@ -30,8 +30,6 @@ const STYLE_DESCRIPTIONS: Record<string, string> = {
   balzac: "réaliste du XIXe siècle, avec des descriptions détaillées",
   proust: "proustien, avec de longues phrases et des réflexions sur la mémoire",
   camus: "existentialiste, sobre et philosophique",
-  vian: "surréaliste et fantaisiste",
-  contemporary: "contemporain et accessible"
 }
 
 const PERSONALITY_DESCRIPTIONS: Record<string, string> = {
