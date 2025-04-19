@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Chat le Fataliste",
   description: "Une expérience littéraire interactive inspirée par Denis Diderot",
-    generator: 'v0.dev'
+    generator: 'BabelGallery'
 }
 
 export default function RootLayout({

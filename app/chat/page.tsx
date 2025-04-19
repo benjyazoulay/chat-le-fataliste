@@ -17,14 +17,26 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [apiKey, setApiKey] = useState("")
   const [literaryStyle, setLiteraryStyle] = useState("diderot")
+  const [styleDescription, setStyleDescription] = useState("")
+  const [narratorPersonality, setNarratorPersonality] = useState("playful")
+  const [personalityDescription, setPersonalityDescription] = useState("")
   const [isFirstMessage, setIsFirstMessage] = useState(true)
   const [storyOptions, setStoryOptions] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [narratorType, setNarratorType] = useState("omniscient")
+  const [narratorTypeDescription, setNarratorTypeDescription] = useState("")
 
   // Load settings from localStorage
   useEffect(() => {
     const savedApiKey = localStorage.getItem("openai_api_key")
     const savedStyle = localStorage.getItem("literary_style")
+    const savedStyleDesc = localStorage.getItem("style_description")
+    const savedPersonality = localStorage.getItem("narrator_personality")
+    const savedPersonalityDesc = localStorage.getItem("personality_description")
+    const savedNarratorType = localStorage.getItem("narrator_type")
+    const savedNarratorTypeDesc = localStorage.getItem("narrator_type_description")
+
+
 
     if (savedApiKey) {
       setApiKey(savedApiKey)
@@ -38,7 +50,25 @@ export default function Chat() {
     }
 
     if (savedStyle) setLiteraryStyle(savedStyle)
+    
+    // Pour les descriptions, nous privilégions toujours ce qui a été sauvegardé
+    if (savedStyleDesc) {
+      setStyleDescription(savedStyleDesc)
+    } 
+    
+    if (savedPersonality) setNarratorPersonality(savedPersonality)
+    
+    if (savedPersonalityDesc) {
+      setPersonalityDescription(savedPersonalityDesc)
+    } 
+
+    if (savedNarratorType) setNarratorType(savedNarratorType); 
+    console.log("Narrator Type:", savedNarratorType); 
+    if (savedNarratorTypeDesc) {
+       setNarratorTypeDescription(savedNarratorTypeDesc)
+     } 
   }, [router, toast])
+
 
   // Initialize chat with AI SDK
   const { messages, input, handleInputChange, handleSubmit, setMessages, append, isLoading } = useChat({
@@ -62,31 +92,33 @@ export default function Chat() {
 
   // Start the story when API key is available
   useEffect(() => {
-    if (apiKey && isFirstMessage) {
+    if (apiKey && isFirstMessage && styleDescription && personalityDescription) {
       setIsFirstMessage(false)
 
       // Add system message to set the context and style
-      setMessages([
-        {
-          id: "system-1",
-          role: "system",
-          content: `Tu es "Chat le Fataliste", un narrateur inspiré par le style de Denis Diderot dans "Jacques le Fataliste". 
-        Tu dois adopter un style littéraire ${getStyleDescription(literaryStyle)}.
+      const systemMessage = {
+        id: "system-1",
+        role: "system",
+        content: `Tu es un auteur tout puissant capable d'adopter n'importe quel style. 
+        Ici, tu dois absolument adopter le style littéraire de ${literaryStyle}.
+        La narration est nécessairement et toujours de type ${narratorType}, ${narratorTypeDescription}. La personnalité du narrateur est ${narratorPersonality}.
         
         INSTRUCTIONS STRICTES:
         1. NE JAMAIS t'adresser directement au lecteur avec des phrases comme "Mais peut-être est-ce vous, lecteur..." ou "Que voulez-vous faire ?".
-        2. NE JAMAIS utiliser le mot "lecteur" ou faire référence à la personne qui lit.
-        3. NE JAMAIS poser de questions directes à l'utilisateur.
-        4. Raconter l'histoire à la troisième personne, comme un narrateur omniscient.
-        5. À la fin de chaque réponse, propose 2-3 options narratives possibles pour la suite, numérotées (1., 2., 3.).
-        6. Ces options doivent être des phrases complètes décrivant une direction possible pour l'histoire.
-        7. Présente simplement les options numérotées à la fin de ton message, sans phrase d'introduction.
-        
-        Commence par une introduction qui présente le concept et propose des points de départ pour l'histoire.`,
-        },
-      ])
+        2. NE JAMAIS poser de questions directes à l'utilisateur.
+        3. À la fin de chaque réponse, propose 2-3 options narratives possibles pour la suite, numérotées (1., 2., 3.).
+        4. Ces options doivent être des phrases complètes décrivant une direction possible pour l'histoire.
+        5. Présente simplement les options numérotées à la fin de ton message, sans phrase d'introduction.
+        `,
+      };
+      
+      // Log du message système
+      console.log("System Prompt:", systemMessage.content);
+  
+      // Ajout du message système
+      setMessages([systemMessage])
     }
-  }, [apiKey, isFirstMessage, setMessages, literaryStyle])
+  }, [apiKey, isFirstMessage, setMessages, styleDescription, personalityDescription])
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -138,26 +170,6 @@ export default function Chat() {
       }
     }
   }, [messages, setMessages])
-
-  // Helper function to get style description
-  function getStyleDescription(style: string): string {
-    switch (style) {
-      case "diderot":
-        return "du XVIIIe siècle, avec des digressions et un ton espiègle"
-      case "balzac":
-        return "réaliste du XIXe siècle, avec des descriptions détaillées"
-      case "proust":
-        return "proustien, avec de longues phrases et des réflexions sur la mémoire"
-      case "camus":
-        return "existentialiste, sobre et philosophique"
-      case "vian":
-        return "surréaliste et fantaisiste"
-      case "contemporary":
-        return "contemporain et accessible"
-      default:
-        return "littéraire classique"
-    }
-  }
 
   // Handle option selection
   const selectOption = (option: string) => {
@@ -224,12 +236,12 @@ export default function Chat() {
                   <Button
                     key={index}
                     variant="outline"
-                    className="border-amber-500 text-amber-800 hover:bg-amber-100 justify-start h-auto py-2 px-4 font-normal"
+                    className="border-amber-500 text-amber-800 hover:bg-amber-100 justify-start h-auto py-2 px-4 font-normal whitespace-normal text-left"
                     onClick={() => selectOption(option)}
                     disabled={isSubmitting || isLoading}
                   >
-                    <Sparkles className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span className="text-left">{option}</span>
+                    <Sparkles className="h-4 w-4 mr-2 flex-shrink-0 self-start mt-1" /> 
+                    <span className="flex-1 break-words">{option}</span> 
                   </Button>
                 ))}
               </div>

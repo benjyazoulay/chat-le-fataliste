@@ -1,8 +1,15 @@
+// app/api/chat/route.ts
 import { createOpenAI } from "@ai-sdk/openai"
 import { streamText } from "ai"
 
+// Define the Vercel AI SDK runtime
+// export const runtime = 'edge'; // Optional: Use edge runtime if preferred
+
 export async function POST(req: Request) {
   try {
+    // IMPORTANT: Extract messages from the request body.
+    // The frontend (useChat hook) will send the entire message history,
+    // including the system prompt you added initially.
     const { messages } = await req.json()
     const apiKey = req.headers.get("x-api-key")
 
@@ -18,34 +25,39 @@ export async function POST(req: Request) {
       apiKey,
     })
 
-    // Ajouter un message système à chaque requête pour renforcer les instructions
-    const enhancedMessages = [
-      {
-        role: "system",
-        content: `INSTRUCTIONS STRICTES:
-1. NE JAMAIS t'adresser directement au lecteur. N'utilise jamais des phrases comme "Mais peut-être est-ce vous, lecteur..." ou "Que voulez-vous faire ?".
-2. NE JAMAIS utiliser le mot "lecteur" ou faire référence à la personne qui lit.
-3. NE JAMAIS poser de questions directes à l'utilisateur.
-4. Raconter l'histoire à la troisième personne, comme un narrateur omniscient.
-5. À la fin de chaque réponse, propose 2-3 options narratives possibles pour la suite, numérotées (1., 2., 3.).
-6. Ces options doivent être des phrases complètes décrivant une direction possible pour l'histoire.
-7. Présente simplement les options numérotées à la fin de ton message, sans phrase d'introduction.`,
-      },
-      ...messages,
-    ]
+    // ---------------------------------------------------------------------
+    // REMOVED: No longer adding a static system prompt here.
+    // We rely on the frontend sending the correct system prompt within 'messages'.
+    // const enhancedMessages = [
+    //   {
+    //     role: "system",
+    //     content: `INSTRUCTIONS STRICTES: ...`, // Static content removed
+    //   },
+    //   ...messages,
+    // ]
+    // ---------------------------------------------------------------------
 
-    const result = streamText({
-      model: userOpenAI("gpt-4o"),
-      messages: enhancedMessages,
-      temperature: 0.9, // Higher temperature for more creative responses
-      maxTokens: 1000,
+    // Call the AI model with the messages received from the frontend
+    const result = await streamText({
+      model: userOpenAI("gpt-4o"), // Ensure you are using the model you intend
+      // Pass the messages array directly as received from the frontend
+      messages: messages,
+      temperature: 1, // Keep your desired settings
+      maxTokens: 1000, // Keep your desired settings
+      // Add other parameters like system prompt if the library API changes
+      // or if you want to override/add system instructions differently,
+      // but for now, we assume the system prompt is the first message.
     })
 
+    // Respond with the stream
     return result.toDataStreamResponse()
-  } catch (error) {
+  } catch (error: any) { // Add type annotation for error
     console.error("Error in chat API:", error)
-    return new Response(JSON.stringify({ error: "An error occurred while processing your request" }), {
-      status: 500,
+    // Improved error reporting
+    const errorMessage = error.message || "An error occurred while processing your request"
+    const errorStatus = error.status || 500
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: errorStatus,
       headers: { "Content-Type": "application/json" },
     })
   }
