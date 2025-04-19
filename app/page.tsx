@@ -28,15 +28,6 @@ export default function Home() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="/settings" className="w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  className="w-full border-amber-800 text-amber-800 hover:bg-amber-100 font-serif text-lg py-6"
-                >
-                  Configuration
-                  <Settings className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
             </div>
           </div>
 
