@@ -17,8 +17,8 @@ export default function Home() {
 
           <div className="bg-white p-8 rounded-lg shadow-md border border-amber-200">
             <p className="text-lg text-gray-800 mb-6">
-              Une expérience littéraire interactive où vous co-écrivez une histoire avec une intelligence artificielle
-              qui, à la manière de Diderot, commente, interrompt et perturbe la narration.
+              Une expérience littéraire interactive où vous co-écrivez une histoire avec une intelligence artificielle.
+              A la manière de Diderot, vous commentez, interrompez et perturbez sans-cesse la narration.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
