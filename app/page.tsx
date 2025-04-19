@@ -18,7 +18,7 @@ export default function Home() {
           <div className="bg-white p-8 rounded-lg shadow-md border border-amber-200">
             <p className="text-lg text-gray-800 mb-6">
               Une expérience littéraire interactive où vous co-écrivez une histoire avec une intelligence artificielle.
-              A la manière de Diderot, vous commentez, interrompez et perturbez sans-cesse la narration.
+              À la manière de Diderot, vous commentez, interrompez et perturbez sans-cesse la narration.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -53,7 +53,7 @@ export default function Home() {
         </div>
       </main>
       <footer className="py-4 text-center text-gray-600 bg-amber-100">
-        <p className="text-sm">Inspiré par Denis Diderot - {new Date().getFullYear()}</p>
+        <p className="text-sm">Benjamin Azoulay - {new Date().getFullYear()}</p>
       </footer>
     </div>
   )
