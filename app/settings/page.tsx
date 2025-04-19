@@ -274,10 +274,8 @@ export default function Settings() {
                 </SelectTrigger>
                 <SelectContent>
                   {KNOWN_STYLES.map(style => (
-                    // Exclude "contemporary" as it wasn't in the original SelectItems
-                    style !== 'contemporary' && <SelectItem key={style} value={style}>{style.charAt(0).toUpperCase() + style.slice(1)}</SelectItem>
+                    <SelectItem key={style} value={style}>{style.charAt(0).toUpperCase() + style.slice(1)}</SelectItem>
                   ))}
-                   <SelectItem value="contemporary">Contemporain</SelectItem> {/* Add Contemporary explicitly */}
                   <SelectItem value="custom">Autre (décrire en dessous)</SelectItem>
                 </SelectContent>
               </Select>
