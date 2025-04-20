@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, BookOpen, Feather, Settings } from "lucide-react"
+import { ArrowRight, BookOpen, Feather, Github } from "lucide-react"
 
 export default function Home() {
   return (
@@ -44,9 +44,12 @@ export default function Home() {
               <span className="text-sm">Co-création narrative</span>
             </div>
           </div>
-          <p className="text-sm text-gray-700 ">
-              Benjamin Azoulay - 2025
-            </p>
+          <div className="flex justify-center items-center text-sm text-gray-700">
+            <a href="https://github.com/benjyazoulay/chat-le-fataliste.git" target="_blank" rel="noopener noreferrer">
+              <Github className="mr-2" size={16} />
+            </a>
+            Benjamin Azoulay - 2025
+          </div>
         </div>
       </main>
     </div>
