@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     // Call the AI model with the messages received from the frontend
     const result = await streamText({
-      model: userOpenAI("gpt-4o"), // Ensure you are using the model you intend
+      model: userOpenAI("gpt-4.1-mini"), // Ensure you are using the model you intend
       // Pass the messages array directly as received from the frontend
       messages: messages,
       temperature: 1, // Keep your desired settings
