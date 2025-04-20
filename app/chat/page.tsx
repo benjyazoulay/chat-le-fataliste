@@ -7,7 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SettingsSheet } from "@/components/ui/settings-drawer" // Import the drawer
-import { Send, Settings, Sparkles, Download, Copy } from "lucide-react"
+import { Send, Settings, Sparkles, Download, Copy, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useChat } from "ai/react"
 import jsPDF from "jspdf"
@@ -407,6 +407,14 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
                             <Send className="h-4 w-4" />
                         </Button>
                    <div className="flex items-center space-x-2">
+                   <Button
+                        variant="ghost"
+                        onClick={() => window.location.reload()} 
+                        title="Réinitialiser la conversation"
+                        className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
                     <Button
                         variant="ghost"
                         onClick={copyResponses}
