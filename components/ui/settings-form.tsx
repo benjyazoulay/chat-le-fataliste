@@ -212,7 +212,7 @@ export function SettingsForm({ onSettingsSaved, onClose }: SettingsFormProps) {
     );
 
     return (
-        <div className="p-6 space-y-8"> {/* Padding applied here */}
+        <div className="p-2 space-y-0"> {/* Padding applied here */}
              {/* API Key Section */}
             <div className="space-y-2">
                 <Label htmlFor="apiKeyForm" className="text-base font-semibold">Clé API OpenAI</Label>

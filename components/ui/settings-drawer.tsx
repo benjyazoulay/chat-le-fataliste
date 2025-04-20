@@ -52,12 +52,7 @@ export function SettingsSheet({ children, onSettingsSaved }: SettingsSheetProps)
                                 Ajustez les paramètres en temps réel.
                             </SheetDescription>
                          </div>
-                         {/* SheetClose pour le bouton de fermeture */}
-                         <SheetClose asChild>
-                            <Button variant="ghost" size="icon" className="text-amber-700 hover:bg-amber-100">
-                                <X className="h-5 w-5" />
-                            </Button>
-                         </SheetClose>
+                         
                     </div>
                 </SheetHeader>
 
