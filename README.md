@@ -3,7 +3,7 @@
 
 > « Vous voyez, lecteur, que je suis en beau chemin, et qu'il ne tiendrait qu'à moi de vous faire attendre un an, deux ans, trois ans... » - Denis Diderot
 
-**Chat le Fataliste** est une expérience littéraire interactive où vous co-écrivez une histoire avec une intelligence artificielle (propulsée par GPT-4o Mini). Inspiré par l'esprit joueur et disruptif de Diderot dans *Jacques le fataliste*, ce projet vous invite non seulement à suivre une narration, mais aussi à la commenter, l'interrompre et la rediriger constamment. Prenez les rênes du récit en définissant le style littéraire, le genre, la personnalité du narrateur, et bien plus encore !
+**Chat le Fataliste** est une expérience littéraire interactive où vous co-écrivez une histoire avec une intelligence artificielle (propulsée par GPT-4.1 Mini). Inspiré par l'esprit joueur et disruptif de Diderot dans *Jacques le fataliste*, ce projet vous invite non seulement à suivre une narration, mais aussi à la commenter, l'interrompre et la rediriger constamment. Prenez les rênes du récit en définissant le style littéraire, le genre, la personnalité du narrateur, et bien plus encore !
 
 <!-- Ajoutez une capture d'écran ou un GIF animé ici pour montrer l'interface ! -->
 <!-- ![Chat le Fataliste en action](lien_vers_votre_gif_ou_screenshot.gif) -->
@@ -21,8 +21,7 @@
 *   **Interface Élégante** : Construite avec Shadcn/UI et Tailwind CSS pour une expérience utilisateur agréable et responsive.
 *   **Options d'Export** : Copiez facilement les réponses de l'IA ou téléchargez l'intégralité de l'histoire générée au format PDF.
 *   **Gestion des Clés API** : Utilise la clé API OpenAI fournie par l'utilisateur et stockée localement dans le navigateur (`localStorage`).
-*   **Mode Clair / Sombre** : Adapté à vos préférences visuelles.
-*   **(Optionnel) Synchronisation v0.dev** : Le projet peut être synchronisé avec les déploiements v0.dev (voir section dédiée).
+
 
 ## 🛠️ Tech Stack
 
