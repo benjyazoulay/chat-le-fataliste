@@ -44,6 +44,9 @@ export default function Home() {
               <span className="text-sm">Co-création narrative</span>
             </div>
           </div>
+          <p className="text-sm text-gray-700 ">
+              Benjamin Azoulay - 2025
+            </p>
         </div>
       </main>
     </div>
