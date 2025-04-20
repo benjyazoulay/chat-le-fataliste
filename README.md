@@ -1,11 +1,5 @@
-# 🐈‍⬛ Chat le Fataliste ✍️
+# Chat le Fataliste ✍️
 
-[![Déployé sur Vercel](https://img.shields.io/badge/Déployé%20sur-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/benjs-projects-6b359cc1/v0-chat-le-fataliste)
-[![Construit avec v0](https://img.shields.io/badge/Construit%20avec-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/27Sy8xS2USr)
-[![Tech Stack](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![Tech Stack](https://img.shields.io/badge/Tailwind_CSS-black?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
-[![Tech Stack](https://img.shields.io/badge/Shadcn/UI-black?style=for-the-badge)](https://ui.shadcn.com/)
-[![Tech Stack](https://img.shields.io/badge/Vercel_AI_SDK-black?style=for-the-badge)](https://sdk.vercel.ai/)
 
 > « Vous voyez, lecteur, que je suis en beau chemin, et qu'il ne tiendrait qu'à moi de vous faire attendre un an, deux ans, trois ans... » - Denis Diderot
 
@@ -99,14 +93,6 @@ L'un des aspects uniques de *Chat le Fataliste* est la possibilité de finement 
 6.  **Affichage & Extraction** : Le frontend affiche la réponse de l'IA au fur et à mesure. Une fois la réponse complète, il tente d'extraire les options narratives numérotées (`1. ...`, `2. ...`) de la fin du texte pour les afficher sous forme de boutons cliquables. Le contenu du message de l'IA est nettoyé pour retirer ces options et éventuelles phrases introductives indésirables.
 7.  **Cycle** : Le processus recommence à l'étape 2.
 
-## 🔗 Intégration v0.dev
-
-Ce dépôt est configuré pour rester synchronisé avec les déploiements effectués via [v0.dev](https://v0.dev).
-
-*   **Développement** : Vous pouvez continuer à construire et modifier votre application sur [v0.dev/chat/projects/27Sy8xS2USr](https://v0.dev/chat/projects/27Sy8xS2USr).
-*   **Déploiement v0** : Lorsque vous déployez depuis l'interface v0, les changements sont automatiquement poussés vers ce dépôt GitHub.
-*   **Déploiement Vercel** : Vercel détecte les mises à jour du dépôt et déploie automatiquement la dernière version.
-*   **Application Live** : [https://vercel.com/benjs-projects-6b359cc1/v0-chat-le-fataliste](https://vercel.com/benjs-projects-6b359cc1/v0-chat-le-fataliste)
 
 ## 🤝 Contribution
 
