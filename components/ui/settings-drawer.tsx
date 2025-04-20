@@ -48,9 +48,9 @@ export function SettingsSheet({ children, onSettingsSaved }: SettingsSheetProps)
                             <SheetTitle className="text-2xl font-serif text-amber-900">
                                 Configuration Narrative
                             </SheetTitle>
-                            <SheetDescription className="text-amber-700">
+                            {/* <SheetDescription className="text-amber-700">
                                 Ajustez les paramètres en temps réel.
-                            </SheetDescription>
+                            </SheetDescription> */}
                          </div>
                          
                     </div>
