@@ -7,9 +7,10 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SettingsSheet } from "@/components/ui/settings-drawer" // Import the drawer
-import { Send, Settings, Sparkles } from "lucide-react"
+import { Send, Settings, Sparkles, Download, Copy } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useChat } from "ai/react"
+import jsPDF from "jspdf"
 
 // --- Constants (Just for defaults, actual values loaded into state) ---
 const DEFAULT_STYLE = "diderot";
@@ -138,6 +139,7 @@ export default function Chat() {
         // For simplicity, the next API call will use the updated settings implicitly
         // where possible (e.g., apiKey in headers, potentially others if API endpoint reads them).
         // The *displayed* system message will remain the original one unless manually updated.
+        window.location.reload();
     }, [loadSettings, toast]);
 
     // Initialize chat with AI SDK
@@ -296,6 +298,50 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
     handleSubmit(e)
   }
 
+
+  // Fonction pour copier les réponses du bot dans le presse‑papier
+    const copyResponses = () => {
+      // Récupère uniquement les messages du bot
+      const assistantMessages = messages
+        .filter((m) => m.role === "assistant")
+        .map((m) => m.content)
+        .join("\n\n");
+      navigator.clipboard.writeText(assistantMessages)
+        .then(() => {
+          toast({
+            title: "Réponses copiées",
+            description: "Les réponses du chatbot ont été copiées dans le presse‑papier.",
+          });
+        })
+       .catch(() => {
+         toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de copier les réponses.",
+          });
+        });
+    };
+  // Fonction pour générer et télécharger le PDF des seules réponses du bot
+  const downloadPdf = () => {
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    // Récupère uniquement les messages du bot
+    const assistantMessages = messages
+      .filter((m) => m.role === "assistant")
+      .map((m) => m.content);
+    let cursorY = 40;
+    doc.setFontSize(14);
+    assistantMessages.forEach((text) => {
+      const lines = doc.splitTextToSize(text, 500);
+      doc.text(lines, 40, cursorY);
+      cursorY += lines.length * 16;
+      // Nouvelle page si on dépasse le bas
+      if (cursorY > doc.internal.pageSize.height - 40) {
+        doc.addPage();
+        cursorY = 40;
+      }
+    });
+    doc.save("chatbot_reponses.pdf");
+  };
     return (
         <div className="min-h-screen bg-amber-50 flex flex-col">
             <header className="bg-amber-800 text-white p-4">
@@ -357,14 +403,32 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
                             disabled={isSubmitting || isLoading}
                             aria-label="Chat input"
                         />
-                        <Button type="submit" className="bg-amber-800 hover:bg-amber-900 disabled:opacity-50" disabled={isSubmitting || isLoading || !input.trim()}>
+                        <Button type="submit" className="bg-amber-800 hover:bg-amber-700 disabled:opacity-50" disabled={isSubmitting || isLoading || !input.trim()}>
                             <Send className="h-4 w-4" />
                         </Button>
-                        <SettingsSheet onSettingsSaved={handleSettingsSaved}>
-                        <Button variant="ghost" className="bg-amber-800 hover:bg-amber-700 disabled:opacity-50">
-                            <Settings className="h-5 w-5" />
+                   <div className="flex items-center space-x-2">
+                    <Button
+                        variant="ghost"
+                        onClick={copyResponses}
+                        title="Copier les réponses"
+                        className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white"
+                      >
+                        <Copy className="h-5 w-5" />
+                      </Button>
+                      <Button
+                       variant="ghost"
+                        onClick={downloadPdf}
+                        title="Télécharger les réponses"
+                        className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white"
+                      >
+                        <Download className="h-5 w-5" />
+                      </Button>
+                      <SettingsSheet onSettingsSaved={handleSettingsSaved}>
+                        <Button variant="ghost" className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white">
+                          <Settings className="h-5 w-5" />
                         </Button>
-                    </SettingsSheet>
+                      </SettingsSheet>
+                    </div>
                     </form>
                 </div>
             </main>
