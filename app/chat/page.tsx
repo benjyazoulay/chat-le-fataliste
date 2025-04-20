@@ -7,10 +7,11 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SettingsSheet } from "@/components/ui/settings-drawer" // Import the drawer
-import { Send, Settings, Sparkles, Download, Copy, Trash2 } from "lucide-react"
+import { Send, Settings, Sparkles, Download, Copy, Trash2, ChevronDown, ChevronRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useChat } from "ai/react"
 import jsPDF from "jspdf"
+import clsx from 'clsx';
 
 // --- Constants (Just for defaults, actual values loaded into state) ---
 const DEFAULT_STYLE = "diderot";
@@ -342,6 +343,10 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
     });
     doc.save("chatbot_reponses.pdf");
   };
+  const [isExpanded, setIsExpanded] = useState(true);
+  const toggleExpansion = () => {
+    setIsExpanded(!isExpanded);
+  };
     return (
         <div className="min-h-screen bg-amber-50 flex flex-col">
             <header className="bg-amber-800 text-white p-4">
@@ -374,24 +379,67 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
 
                     {/* --- Story Options Rendering (keep as is) --- */}
                     {storyOptions.length > 0 && !isLoading && (
-                        <div className="p-4 border-t border-amber-200 bg-amber-50">
-                            <p className="text-sm text-gray-600 mb-2 font-medium">Et maintenant ?</p>
-                            <div className="flex flex-col gap-2">
-                                {storyOptions.map((option, index) => (
-                                    <Button
-                                        key={index}
-                                        variant="outline"
-                                        className="border-amber-500 text-amber-800 hover:bg-amber-100 justify-start h-auto py-2 px-4 font-normal whitespace-normal text-left transition-colors duration-150 ease-in-out"
-                                        onClick={() => selectOption(option)}
-                                        disabled={isSubmitting || isLoading}
-                                    >
-                                        <Sparkles className="h-4 w-4 mr-2 flex-shrink-0 self-start mt-1 text-amber-600" />
-                                        <span className="flex-1 break-words">{option}</span>
-                                    </Button>
-                                ))}
-                            </div>
+                <div className="p-4 border-t border-amber-200 bg-amber-50">
+                    {/* En-tête cliquable pour déplier/rétracter */}
+                    <div
+                        // On enlève rainbow-text-effect d'ici
+                        className="flex items-center gap-2 cursor-pointer mb-2 group"
+                        onClick={toggleExpansion}
+                        role="button"
+                        aria-expanded={isExpanded}
+                        aria-controls="story-options-content"
+                        tabIndex={0}
+                        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleExpansion()}
+                    >
+                        {/* Icône flèche conditionnelle */}
+                        {isExpanded ? (
+                            <ChevronDown
+                                className="h-4 w-4 text-gray-600 flex-shrink-0 transition-transform duration-200"
+                                aria-hidden="true"
+                            />
+                        ) : (
+                            <ChevronRight
+                                // Donne une couleur spécifique à la flèche quand rétracté
+                                // Par exemple, une couleur ambre pour correspondre au thème
+                                className="h-4 w-4 text-amber-600 flex-shrink-0 transition-transform duration-200" // Ajout d'une légère pulsation pour attirer l'œil
+                                aria-hidden="true"
+                            />
+                        )}
+                        {/* Texte "Et maintenant ?" */}
+                        <p className={clsx(
+                            "text-sm font-medium select-none",
+                             // Applique l'effet SEULEMENT au texte si rétracté
+                            !isExpanded && "rainbow-text-effect",
+                             // Utilise la couleur normale si déplié
+                            isExpanded && "text-gray-600"
+                        )}>
+                            Et maintenant ?
+                        </p>
+                    </div>
+
+                    {/* Contenu des options (conditionnel) */}
+                    {isExpanded && (
+                        <div
+                            id="story-options-content"
+                            className="flex flex-col gap-2 mt-2 animate-fade-in"
+                        >
+                            {storyOptions.map((option, index) => (
+                                <Button
+                                    key={index}
+                                    variant="outline"
+                                    className="border-amber-500 text-amber-800 hover:bg-amber-100 justify-start h-auto py-2 px-4 font-normal whitespace-normal text-left transition-colors duration-150 ease-in-out"
+                                    onClick={() => selectOption(option)}
+                                    disabled={isSubmitting || isLoading}
+                                >
+                                    <Sparkles className="h-4 w-4 mr-2 flex-shrink-0 self-start mt-1 text-amber-600" />
+                                    <span className="flex-1 break-words">{option}</span>
+                                </Button>
+                            ))}
                         </div>
                     )}
+                </div>
+            )}
+
                      <form
                         onSubmit={handleFormSubmit}
                         className="p-4 border-t border-amber-200 flex flex-col sm:flex-row gap-2 sm:items-center"

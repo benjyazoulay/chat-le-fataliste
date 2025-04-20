@@ -57,3 +57,64 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Animation Keyframes pour l'arc-en-ciel */
+@keyframes rainbow-background-animation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Classe pour appliquer l'effet arc-en-ciel au texte et à l'icône */
+.rainbow-text-effect {
+  /* Dégradé de couleurs vives pour l'arc-en-ciel */
+  background: linear-gradient(
+    90deg, /* Direction du dégradé */
+    hsl(0, 80%, 65%),   /* Rouge */
+    hsl(30, 80%, 60%),  /* Orange */
+    hsl(60, 80%, 55%),  /* Jaune */
+    hsl(120, 80%, 60%), /* Vert */
+    hsl(180, 80%, 60%), /* Cyan */
+    hsl(240, 80%, 65%), /* Bleu */
+    hsl(300, 80%, 65%), /* Violet */
+    hsl(360, 80%, 65%)  /* Rouge (pour boucler) */
+  );
+  /* Taille du fond plus grande que l'élément pour permettre le mouvement */
+  background-size: 250% 100%;
+  /* Appliquer l'animation */
+  animation: rainbow-background-animation 4s linear infinite;
+
+  /* Clipping : le fond n'est visible qu'à travers le texte/icône */
+  background-clip: text;
+  -webkit-background-clip: text; /* Support Safari */
+
+  /* Rendre la couleur du texte et de l'icône elle-même transparente */
+  /* Important! pour s'assurer que ça override les couleurs de texte/icône */
+  color: transparent !important;
+  -webkit-text-fill-color: transparent; /* Support Safari */
+
+  /* S'assurer que l'icône SVG hérite et applique l'effet correctement */
+  & svg {
+    /* Forcer l'icône à utiliser la couleur 'transparente' définie ci-dessus */
+    /* Cela permet au background-clip de fonctionner sur l'icône */
+    color: currentColor !important; /* Utilise la couleur héritée (transparente) */
+    fill: currentColor !important; /* Appliquer aux remplissages SVG si nécessaire */
+    stroke: currentColor !important; /* Appliquer aux traits SVG si nécessaire */
+    /* Parfois, rendre le fill/stroke explicitement transparents aide aussi */
+    /* fill: transparent !important; */
+    /* stroke: transparent !important; */
+  }
+}
+
+/* Animation simple de fondu enchaîné pour l'apparition du contenu */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Optionnel : Ajoute une petite transition sur la rotation de la flèche */
+/* (Déjà ajouté via les classes `transition-transform duration-200` dans le JSX) */
