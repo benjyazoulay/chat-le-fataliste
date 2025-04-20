@@ -4,7 +4,7 @@ import { ArrowRight, BookOpen, Feather, Settings } from "lucide-react"
 
 export default function Home() {
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-amber-50">
+    <div className="flex flex-col bg-amber-50">
       <main className="flex-1 flex flex-col items-center justify-center p-6 md:p-24">
         <div className="max-w-3xl w-full text-center space-y-8">
           <div className="space-y-2">

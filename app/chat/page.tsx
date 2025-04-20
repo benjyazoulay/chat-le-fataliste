@@ -392,51 +392,55 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
                             </div>
                         </div>
                     )}
-
-                     {/* --- Input Form Rendering (minor adjustment for options body) --- */}
-                    <form onSubmit={handleFormSubmit} className="p-4 border-t border-amber-200 flex gap-2 items-center">
-                        <Input
-                            value={input}
-                            onChange={handleInputChange}
-                            placeholder={storyOptions.length > 0 ? "Ou écrivez votre propre suite..." : "Commencez ou continuez l'histoire..."}
-                            className="border-amber-300 focus:ring-amber-500 focus:border-amber-500 flex-1 bg-white disabled:bg-gray-100"
-                            disabled={isSubmitting || isLoading}
-                            aria-label="Chat input"
-                        />
-                        <Button type="submit" className="bg-amber-800 hover:bg-amber-700 disabled:opacity-50" disabled={isSubmitting || isLoading || !input.trim()}>
-                            <Send className="h-4 w-4" />
-                        </Button>
-                   <div className="flex items-center space-x-2">
-                   <Button
-                        variant="ghost"
-                        onClick={() => window.location.reload()} 
-                        title="Réinitialiser la conversation"
-                        className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    <Button
-                        variant="ghost"
-                        onClick={copyResponses}
-                        title="Copier les réponses"
-                        className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white"
-                      >
-                        <Copy className="h-5 w-5" />
-                      </Button>
-                      <Button
-                       variant="ghost"
-                        onClick={downloadPdf}
-                        title="Télécharger les réponses"
-                        className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white"
-                      >
-                        <Download className="h-5 w-5" />
-                      </Button>
-                      <SettingsSheet onSettingsSaved={handleSettingsSaved}>
-                        <Button variant="ghost" className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white">
-                          <Settings className="h-5 w-5" />
-                        </Button>
-                      </SettingsSheet>
-                    </div>
+                     <form
+                        onSubmit={handleFormSubmit}
+                        className="p-4 border-t border-amber-200 flex flex-col sm:flex-row gap-2 sm:items-center"
+                    >
+                      <div className="flex gap-2 items-center w-full sm:flex-1">
+                            <Input
+                                value={input}
+                                onChange={handleInputChange}
+                                placeholder={storyOptions.length > 0 ? "Ou écrivez votre propre suite..." : "Commencez ou continuez l'histoire..."}
+                                // flex-1 pour que l'input prenne l'espace disponible dans ce groupe
+                                className="border-amber-300 focus:ring-amber-500 focus:border-amber-500 flex-1 bg-white disabled:bg-gray-100"
+                                disabled={isSubmitting || isLoading}
+                                aria-label="Chat input"
+                            />
+                            <Button type="submit" className="bg-amber-800 hover:bg-amber-700 disabled:opacity-50" disabled={isSubmitting || isLoading || !input.trim()}>
+                                <Send className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <div className="flex items-center justify-center sm:justify-end space-x-2">
+                            <Button
+                                variant="ghost"
+                                onClick={() => window.location.reload()}
+                                title="Réinitialiser la conversation"
+                                className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white"
+                            >
+                                <Trash2 className="h-5 w-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                onClick={copyResponses}
+                                title="Copier les réponses"
+                                className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white"
+                            >
+                                <Copy className="h-5 w-5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                                onClick={downloadPdf}
+                                title="Télécharger les réponses"
+                                className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white"
+                            >
+                                <Download className="h-5 w-5" />
+                            </Button>
+                            <SettingsSheet onSettingsSaved={handleSettingsSaved}>
+                                <Button variant="ghost" className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white">
+                                  <Settings className="h-5 w-5" />
+                                </Button>
+                            </SettingsSheet>
+                        </div>
                     </form>
                 </div>
             </main>
