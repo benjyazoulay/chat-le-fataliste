@@ -8,6 +8,9 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center justify-center p-6 md:p-24">
         <div className="max-w-3xl w-full text-center space-y-8">
           <div className="space-y-2">
+          <div className="text-center">
+            <img src="/diderot.jpg" alt="Diderot" className="h-24 w-24 mx-auto" />
+          </div>
             <h1 className="text-4xl md:text-6xl font-serif font-bold tracking-tight">Chat le Fataliste</h1>
             <p className="text-xl md:text-2xl text-gray-700 font-serif italic">
               « Vous voyez, lecteur, que je suis en beau chemin, et qu'il ne tiendrait qu'à moi de vous faire attendre

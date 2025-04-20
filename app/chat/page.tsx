@@ -346,10 +346,10 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
         <div className="min-h-screen bg-amber-50 flex flex-col">
             <header className="bg-amber-800 text-white p-4">
                 <div className="container max-w-4xl mx-auto flex justify-between items-center">
-                    <Link href="/" className="font-serif text-xl font-bold">
+                    <Link href="/" className="font-serif text-xl font-bold flex items-center">
+                        <img src="/diderot.jpg" alt="Diderot" className="h-6 w-6 mr-2" /> {/* Ajout de l'image avant le titre */}
                         Chat le Fataliste
                     </Link>
-                    {/* Replace Link with SettingsDrawer */}
                     
                 </div>
             </header>
