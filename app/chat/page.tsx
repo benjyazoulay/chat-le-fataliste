@@ -1,28 +1,32 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect, useRef, useCallback } from "react" // Added useCallback
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { SettingsSheet } from "@/components/ui/settings-drawer" // Import the drawer
-import { Send, Settings, Sparkles, Download, Copy, Trash2, ChevronDown, ChevronRight } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { useChat } from "ai/react"
-import jsPDF from "jspdf"
-import clsx from 'clsx';
+import type React from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { SettingsSheet } from "@/components/ui/settings-drawer";
+import { DecisionTreePanel } from "@/components/ui/decision-tree-panel"; // Import du nouveau composant
+import {
+  Send,
+  Settings,
+  Sparkles,
+  Download,
+  Copy,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  BookOpen,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useChat } from "ai/react";
+import { useDecisionTree } from "@/hooks/use-decision-tree"; // Import du hook personnalisé
+import jsPDF from "jspdf";
+import clsx from "clsx";
+import { DECISION_TREE_STORAGE_KEY } from "@/lib/decision-tree-types";
 
-// --- Constants (Just for defaults, actual values loaded into state) ---
-const DEFAULT_STYLE = "diderot";
-const DEFAULT_PERSONALITY = "playful";
-const DEFAULT_GENRE = "conte_philosophique";
-const DEFAULT_RELATION = "heterodiegetic";
-const DEFAULT_FOCALIZATION = "zero";
-const DEFAULT_PERSON = "third_person";
-const DEFAULT_TENSE = "past";
-
-// Helper to get description (needed for system prompt) - include ALL description maps
+// --- Constants and Imports --- (keep as is)
 import {
     KNOWN_STYLES, STYLE_DESCRIPTIONS,
     KNOWN_PERSONALITIES, PERSONALITY_DESCRIPTIONS, PERSONALITY_DISPLAY_NAMES,
@@ -31,40 +35,57 @@ import {
     KNOWN_PERSONS, PERSON_DESCRIPTIONS, PERSON_DISPLAY_NAMES,
     KNOWN_TENSES, TENSE_DESCRIPTIONS, TENSE_DISPLAY_NAMES,
     KNOWN_GENRES, GENRE_DESCRIPTIONS, GENRE_DISPLAY_NAMES
-  } from "@/lib/narrative-constants"; // Assuming constants are exported or accessible
+  } from "@/lib/narrative-constants";
 
+const DEFAULT_STYLE = "diderot";
+const DEFAULT_PERSONALITY = "playful";
+const DEFAULT_GENRE = "conte_philosophique";
+const DEFAULT_RELATION = "heterodiegetic";
+const DEFAULT_FOCALIZATION = "zero";
+const DEFAULT_PERSON = "third_person";
+const DEFAULT_TENSE = "past";
 // --- End Constants ---
 
-
 export default function Chat() {
-    const router = useRouter()
-    const { toast } = useToast()
-    const messagesEndRef = useRef<HTMLDivElement>(null)
+  const router = useRouter();
+  const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // State for API Key and Narrative Settings - LIVES IN CHAT COMPONENT
-    const [apiKey, setApiKey] = useState("")
-    const [literaryStyle, setLiteraryStyle] = useState(DEFAULT_STYLE)
-    const [styleDescription, setStyleDescription] = useState("")
-    const [narratorPersonality, setNarratorPersonality] = useState(DEFAULT_PERSONALITY)
-    const [personalityDescription, setPersonalityDescription] = useState("")
-    const [literaryGenre, setLiteraryGenre] = useState(DEFAULT_GENRE)
-    const [genreDescription, setGenreDescription] = useState("")
-    const [narratorRelation, setNarratorRelation] = useState(DEFAULT_RELATION);
-    const [narratorRelationDescription, setNarratorRelationDescription] = useState("");
-    const [focalization, setFocalization] = useState(DEFAULT_FOCALIZATION);
-    const [focalizationDescription, setFocalizationDescription] = useState("");
-    const [narrativePerson, setNarrativePerson] = useState(DEFAULT_PERSON);
-    const [narrativePersonDescription, setNarrativePersonDescription] = useState("");
-    const [narrativeTense, setNarrativeTense] = useState(DEFAULT_TENSE);
-    const [narrativeTenseDescription, setNarrativeTenseDescription] = useState("");
+  // Hook pour l'arbre de décision
+  const {
+    decisionTree,
+    addBotMessage,
+    selectOption,
+    resetDecisionTree,
+    isTreePanelOpen,
+    setIsTreePanelOpen,
+  } = useDecisionTree();
 
-    const [isFirstMessage, setIsFirstMessage] = useState(true)
-    const [storyOptions, setStoryOptions] = useState<string[]>([])
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [settingsLoaded, setSettingsLoaded] = useState(false); // Flag
+  // State (keep as is)
+  const [apiKey, setApiKey] = useState("");
+  const [literaryStyle, setLiteraryStyle] = useState(DEFAULT_STYLE);
+  const [styleDescription, setStyleDescription] = useState("");
+  const [narratorPersonality, setNarratorPersonality] = useState(DEFAULT_PERSONALITY);
+  const [personalityDescription, setPersonalityDescription] = useState("");
+  const [literaryGenre, setLiteraryGenre] = useState(DEFAULT_GENRE);
+  const [genreDescription, setGenreDescription] = useState("");
+  const [narratorRelation, setNarratorRelation] = useState(DEFAULT_RELATION);
+  const [narratorRelationDescription, setNarratorRelationDescription] = useState("");
+  const [focalization, setFocalization] = useState(DEFAULT_FOCALIZATION);
+  const [focalizationDescription, setFocalizationDescription] = useState("");
+  const [narrativePerson, setNarrativePerson] = useState(DEFAULT_PERSON);
+  const [narrativePersonDescription, setNarrativePersonDescription] = useState("");
+  const [narrativeTense, setNarrativeTense] = useState(DEFAULT_TENSE);
+  const [narrativeTenseDescription, setNarrativeTenseDescription] = useState("");
+  const [isFirstMessage, setIsFirstMessage] = useState(true);
+  const [storyOptions, setStoryOptions] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false); // Flag
+  const [isExpanded, setIsExpanded] = useState(true); // State for options expansion
 
-    // Function to load all settings from localStorage into state
-    const loadSettings = useCallback(() => {
+  // --- loadSettings, handleSettingsSaved, useChat setup, useEffects, handlers (keep as is) ---
+    // (Assuming these parts are correct based on the previous context)
+  const loadSettings = useCallback(() => {
         console.log("Chat component: Loading settings from localStorage...");
         const savedApiKey = localStorage.getItem("openai_api_key")
         setApiKey(savedApiKey || ""); // Set API key state
@@ -161,8 +182,55 @@ export default function Chat() {
             narrativeTense, narrativeTenseDescription
         },
         initialMessages: [],
-        onFinish: () => {
-            setIsSubmitting(false)
+        onFinish: (message) => { // message is the AI's response
+            setIsSubmitting(false);
+            // Process message *after* it's fully received and loading stops
+            const lastMessageContent = message.content;
+            const options: string[] = [];
+            const optionRegex = /\d+\.\s+(.*?)(?=\n\d+\.|\n\n|$)/gs;
+            let match;
+            let cleanedContent = lastMessageContent;
+
+            while ((match = optionRegex.exec(lastMessageContent)) !== null) {
+                if (match[1]) {
+                    options.push(match[1].trim());
+                    cleanedContent = cleanedContent.replace(match[0], "").trim();
+                }
+            }
+
+             // Additional Cleaning (optional, apply if needed)
+            cleanedContent = cleanedContent.replace(/Que (?:voulez|souhaitez|préférez)[^?]*\?/gi, "");
+            cleanedContent = cleanedContent.replace(/Que (?:choisissez|décidez)[^?]*\?/gi, "");
+            cleanedContent = cleanedContent.replace(/(?:Voici|Voilà)(?: quelques)? options[^:]*:/gi, "");
+            cleanedContent = cleanedContent.replace(/(?:Choisissez|Sélectionnez)[^:]*:/gi, "");
+            cleanedContent = cleanedContent.replace(/Mais peut-être est-ce vous, lecteur[^.]*\./gi, "");
+            cleanedContent = cleanedContent.replace(/[^.]*lecteur[^.]*\./gi, ""); // More general reader address removal
+            cleanedContent = cleanedContent.replace(/\n\s*\n\s*\n/g, "\n\n").trim(); // Trim trailing/leading whitespace again
+
+
+            // Update Decision Tree
+            if (options.length > 0 || !lastMessageContent.match(/\d+\.\s+/)) { // Add even if no options (end node)
+                addBotMessage(cleanedContent || lastMessageContent, options); // Use original if cleaning removed everything
+            }
+
+            // Update UI State
+            setStoryOptions(options);
+
+            // Update the last message in the state if cleaning occurred
+             if (cleanedContent !== lastMessageContent && messages.length > 0) {
+                setMessages(prevMessages => {
+                    const updatedMessages = [...prevMessages];
+                    // Find the actual last assistant message to update
+                    const lastAssistantIndex = updatedMessages.map(m => m.role).lastIndexOf('assistant');
+                    if(lastAssistantIndex !== -1) {
+                         updatedMessages[lastAssistantIndex] = {
+                            ...updatedMessages[lastAssistantIndex],
+                            content: cleanedContent || lastMessageContent, // Use original if empty
+                         };
+                    }
+                    return updatedMessages;
+                });
+            }
         },
         onError: (error) => {
             setIsSubmitting(false)
@@ -179,8 +247,13 @@ export default function Chat() {
         // Ensure all required settings and descriptions are loaded AND it's the first message
         const allDescriptionsAvailable = styleDescription && personalityDescription && genreDescription && narratorRelationDescription && focalizationDescription && narrativePersonDescription && narrativeTenseDescription;
 
-        if (settingsLoaded && apiKey && isFirstMessage && allDescriptionsAvailable) {
+        if (settingsLoaded && apiKey && isFirstMessage && allDescriptionsAvailable && messages.length === 0) { // Ensure messages is empty too
             console.log("Chat component: Setting initial system prompt.");
+            const persistedTree = localStorage.getItem(DECISION_TREE_STORAGE_KEY);
+            if (persistedTree) {
+                console.log("Chat component: Found persisted decision tree while chat is empty. Resetting tree.");
+                resetDecisionTree(); // Reset the tree state and clear localStorage for it
+            }
             setIsFirstMessage(false) // Prevent this from running again
 
             const systemMessageContent = `
@@ -213,6 +286,8 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
             setMessages([systemMessage]); // Set only the system message initially
         }
     }, [
+        resetDecisionTree,
+        messages.length, // Add this dependency
         settingsLoaded, apiKey, isFirstMessage, setMessages, // Core dependencies
         literaryStyle, styleDescription, // Style
         narratorPersonality, personalityDescription, // Personality
@@ -224,70 +299,43 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
     ]);
 
 
-    // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    // Scroll to bottom effect
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }, [messages]); // Trigger scroll whenever messages update
 
-    // Extraire les options et nettoyer le contenu du message
-    if (messages.length > 0 && messages[messages.length - 1].role === "assistant") {
-      const lastMessage = messages[messages.length - 1].content
-      const options: string[] = []
 
-      // Regex pour extraire les options numérotées
-      const optionRegex = /\d+\.\s+(.*?)(?=\n\d+\.|\n\n|$)/gs
-      let match
-      let cleanedContent = lastMessage
+    // Handle option selection
+    const selectOptionHandler = (option: string) => {
+        if (isSubmitting || isLoading) return
 
-      // Collecter les options et les supprimer du contenu
-      while ((match = optionRegex.exec(lastMessage)) !== null) {
-        if (match[1]) {
-          options.push(match[1].trim())
-          // Marquer cette partie pour suppression
-          cleanedContent = cleanedContent.replace(match[0], "")
-        }
-      }
+        setIsSubmitting(true)
+        setStoryOptions([]) // Clear options immediately
 
-      // Nettoyer les phrases d'introduction aux options et les adresses au lecteur
-      cleanedContent = cleanedContent.replace(/Que (?:voulez|souhaitez|préférez)[^?]*\?/g, "")
-      cleanedContent = cleanedContent.replace(/Que (?:choisissez|décidez)[^?]*\?/g, "")
-      cleanedContent = cleanedContent.replace(/(?:Voici|Voilà)(?: quelques)? options[^:]*:/g, "")
-      cleanedContent = cleanedContent.replace(/(?:Choisissez|Sélectionnez)[^:]*:/g, "")
-      cleanedContent = cleanedContent.replace(/Mais peut-être est-ce vous, lecteur[^.]*\./g, "")
-      cleanedContent = cleanedContent.replace(/[^.]*lecteur[^.]*\./g, "")
+        // Update decision tree with the user's choice
+        selectOption(option);
 
-      // Supprimer les lignes vides consécutives
-      cleanedContent = cleanedContent.replace(/\n\s*\n\s*\n/g, "\n\n")
-      cleanedContent = cleanedContent.trim()
-
-      // Mettre à jour le dernier message avec le contenu nettoyé
-      if (options.length > 0) {
-        setStoryOptions(options)
-
-        // Mettre à jour le contenu du message sans modifier l'objet original
-        const updatedMessages = [...messages]
-        updatedMessages[updatedMessages.length - 1] = {
-          ...updatedMessages[updatedMessages.length - 1],
-          content: cleanedContent,
-        }
-
-        setMessages(updatedMessages)
-      }
+        // Send the chosen option to the API
+        append({
+            role: "user",
+            content: option,
+        })
     }
-  }, [messages, setMessages])
 
-  // Handle option selection
-  const selectOption = (option: string) => {
-    if (isSubmitting || isLoading) return
-
-    setIsSubmitting(true)
-    setStoryOptions([]) // Clear options immediately to prevent double-clicks
-
-    // Use append instead of handleSubmit for more direct control
-    append({
-      role: "user",
-      content: option,
-    })
-  }
+    // Handle chat reset
+    const handleResetChat = () => {
+        resetDecisionTree(); // Reset the tree state
+        // Reloading might be too drastic if you want settings preserved
+        // Instead, reset chat state and potentially re-trigger initial message logic
+        setMessages([]); // Clear messages
+        setStoryOptions([]);
+        setInput(""); // Clear input field
+        setIsFirstMessage(true); // Allow system prompt regeneration
+        // The useEffect for the system prompt should run again now
+         toast({ title: "Conversation réinitialisée." });
+         // Optionally, call loadSettings again if needed, though it should persist
+         // loadSettings(); // Re-ensure settings are loaded for the new prompt
+    };
 
   // Handle form submission
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -296,17 +344,24 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
 
     setIsSubmitting(true)
     setStoryOptions([]) // Clear options when submitting custom input
-    handleSubmit(e)
+
+    // Manually add user message to decision tree if needed (optional, depends on desired tree structure)
+    // selectOption(input); // Treat custom input like an option selection for the tree?
+
+    handleSubmit(e) // Use Vercel AI hook's submit
   }
 
 
-  // Fonction pour copier les réponses du bot dans le presse‑papier
+  // Copy responses function (keep as is)
     const copyResponses = () => {
-      // Récupère uniquement les messages du bot
       const assistantMessages = messages
         .filter((m) => m.role === "assistant")
         .map((m) => m.content)
         .join("\n\n");
+      if (!assistantMessages) {
+          toast({ title: "Aucune réponse à copier.", variant: "destructive"});
+          return;
+      }
       navigator.clipboard.writeText(assistantMessages)
         .then(() => {
           toast({
@@ -322,143 +377,180 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
           });
         });
     };
-  // Fonction pour générer et télécharger le PDF des seules réponses du bot
+
+  // Download PDF function (keep as is)
   const downloadPdf = () => {
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    // Récupère uniquement les messages du bot
     const assistantMessages = messages
       .filter((m) => m.role === "assistant")
       .map((m) => m.content);
+
+    if (assistantMessages.length === 0) {
+        toast({ title: "Aucune réponse à télécharger.", variant: "destructive"});
+        return;
+    }
+
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
     let cursorY = 40;
-    doc.setFontSize(14);
-    assistantMessages.forEach((text) => {
-      const lines = doc.splitTextToSize(text, 500);
-      doc.text(lines, 40, cursorY);
-      cursorY += lines.length * 16;
-      // Nouvelle page si on dépasse le bas
-      if (cursorY > doc.internal.pageSize.height - 40) {
+    const pageHeight = doc.internal.pageSize.height;
+    const marginBottom = 40;
+    const availableHeight = pageHeight - cursorY - marginBottom;
+    const lineSpacing = 6; // Additional spacing between lines
+    doc.setFont("times", "normal"); // Use a serif font like Times
+    doc.setFontSize(12); // Standard text size
+
+    assistantMessages.forEach((text, index) => {
+      const lines = doc.splitTextToSize(text, 500); // 500 points width approx
+      let textBlockHeight = (lines.length * (doc.getFontSize() + lineSpacing));
+
+      // Check if the block fits on the current page
+      if (cursorY + textBlockHeight > pageHeight - marginBottom) {
         doc.addPage();
-        cursorY = 40;
+        cursorY = 40; // Reset cursor for new page
       }
+
+      // Add the text block
+      doc.text(lines, 40, cursorY);
+      cursorY += textBlockHeight + 10; // Add extra space between messages
+
+      // Add a separator between messages, except for the last one
+    //   if (index < assistantMessages.length - 1) {
+    //       if (cursorY + 10 > pageHeight - marginBottom) { // Check space for separator
+    //             doc.addPage();
+    //             cursorY = 40;
+    //       }
+    //       doc.setLineWidth(0.5);
+    //       doc.line(40, cursorY, 555, cursorY); // Line from margin to margin
+    //       cursorY += 10; // Space after separator
+    //   }
     });
-    doc.save("chatbot_reponses.pdf");
+    doc.save("Chat_le_Fataliste_Recit.pdf");
   };
-  const [isExpanded, setIsExpanded] = useState(true);
+
+  // Toggle options expansion
   const toggleExpansion = () => {
     setIsExpanded(!isExpanded);
   };
-    return (
-        <div className="min-h-screen bg-amber-50 flex flex-col">
-            <header className="bg-amber-800 text-white p-4">
-                <div className="container max-w-4xl mx-auto flex justify-between items-center">
-                    <Link href="/" className="font-serif text-xl font-bold flex items-center">
-                        <img src="/diderot.jpg" alt="Diderot" className="h-6 w-6 mr-2" /> {/* Ajout de l'image avant le titre */}
-                        Chat le Fataliste
-                    </Link>
-                    
+
+  // --- JSX Structure ---
+  return (
+    <div className="min-h-screen bg-amber-50 flex flex-col">
+      <header className="bg-amber-800 text-white p-4 sticky top-0 z-10 shadow"> {/* Added sticky and z-index */}
+        <div className="container max-w-4xl mx-auto flex justify-between items-center">
+          <Link href="/" className="font-serif text-xl font-bold flex items-center">
+            <img src="/diderot.jpg" alt="Diderot" className="h-6 w-6 mr-2 rounded-full" /> {/* Added rounded-full */}
+            Chat le Fataliste
+          </Link>
+          {/* Moved controls to the header for better mobile visibility */}
+            
+        </div>
+      </header>
+
+      <main className="flex-1 container max-w-4xl mx-auto py-6 px-4 flex flex-col"> {/* Added flex flex-col */}
+         <div className="bg-white rounded-lg shadow-md border border-amber-200 flex flex-col flex-1 overflow-hidden"> {/* Added flex-1 and overflow-hidden */}
+           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+             {messages
+               .filter((m) => m.role !== "system") // Don't display system message
+               .map((message) => (
+                 <div
+                   key={message.id}
+                   className={clsx(
+                     "p-3 rounded-lg shadow-sm max-w-[85%] break-words", // Added break-words
+                     message.role === "user"
+                       ? "bg-amber-100 ml-auto"
+                       : "bg-white border border-amber-200 mr-auto"
+                   )}
+                 >
+                   <div className="font-serif text-gray-800 whitespace-pre-wrap">
+                     {message.content}
+                   </div>
+                 </div>
+               ))}
+             <div ref={messagesEndRef} />
+           </div>
+
+           {/* Story Options Rendering */}
+          {storyOptions.length > 0 && !isLoading && (
+               <div className="p-4 border-t border-amber-200 bg-amber-50">
+                 {/* Header for expansion toggle */}
+                 <div
+                    className="flex items-center gap-2 cursor-pointer mb-2 group"
+                    onClick={toggleExpansion}
+                    role="button"
+                    aria-expanded={isExpanded}
+                    aria-controls="story-options-content"
+                    tabIndex={0}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleExpansion()}
+                 >
+                   {isExpanded ? (
+                     <ChevronDown className="h-4 w-4 text-gray-600 flex-shrink-0 transition-transform duration-200"/>
+                   ) : (
+                     <ChevronRight className="h-4 w-4 text-amber-600 flex-shrink-0 transition-transform duration-200"/>
+                   )}
+                   <p className={clsx(
+                     "text-sm font-medium select-none",
+                     !isExpanded && "rainbow-text-effect", // Apply effect only when collapsed
+                     isExpanded && "text-gray-600"
+                   )}>
+                    Et maintenant ?
+                   </p>
+                 </div>
+
+                 {/* Conditional Options Content */}
+                 {isExpanded && (
+                   <div
+                    id="story-options-content"
+                    className="flex flex-col gap-2 mt-2 animate-fade-in"
+                   >
+                     {storyOptions.map((option, index) => (
+                       <Button
+                        key={index}
+                        variant="outline"
+                        className="border-amber-500 text-amber-800 hover:bg-amber-100 justify-start h-auto py-2 px-4 font-normal whitespace-normal text-left transition-colors duration-150 ease-in-out"
+                        onClick={() => selectOptionHandler(option)}
+                        disabled={isSubmitting || isLoading}
+                       >
+                         <Sparkles className="h-4 w-4 mr-2 flex-shrink-0 self-start mt-1 text-amber-600" />
+                         <span className="flex-1 break-words">{option}</span>
+                       </Button>
+                     ))}
+                   </div>
+                 )}
+               </div>
+             )}
+
+
+             {/* Input Form */}
+           <form
+                onSubmit={handleFormSubmit}
+                className="p-4 border-t border-amber-200 flex flex-col sm:flex-row gap-2 sm:items-center" // Ensure background for form area
+            >
+                <div className="flex gap-2 items-center w-full sm:flex-1">
+                <Input
+                    value={input}
+                    onChange={handleInputChange}
+                    placeholder={storyOptions.length > 0 ? "Ou écrivez votre propre suite..." : "Commencez l'histoire..."}
+                    className="border-amber-300 focus:ring-amber-500 focus:border-amber-500 flex-1 bg-white disabled:bg-gray-100"
+                    disabled={isSubmitting || isLoading}
+                    aria-label="Chat input"
+                />
+                <Button type="submit" className="bg-amber-800 hover:bg-amber-700 disabled:opacity-50" disabled={isSubmitting || isLoading || !input.trim()}>
+                    <Send className="h-4 w-4" />
+                </Button>
                 </div>
-            </header>
-
-            <main className="flex-1 container max-w-4xl mx-auto py-6 px-4">
-                <div className="bg-white rounded-lg shadow-md border border-amber-200 h-[calc(100vh-12rem)] flex flex-col">
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                        {messages
-                            .filter((m) => m.role !== "system") // Don't display system message
-                            .map((message) => (
-                                <div
-                                    key={message.id}
-                                    className={`${
-                                        message.role === "user" ? "bg-amber-100 ml-auto max-w-[85%]" : "bg-white border border-amber-200 mr-auto max-w-[85%]" // Adjusted alignment
-                                    } p-4 rounded-lg shadow-sm`} // Added shadow-sm
-                                >
-                                    <div className="font-serif text-gray-800 whitespace-pre-wrap break-words">{message.content}</div>
-                                </div>
-                            ))}
-                        <div ref={messagesEndRef} />
-                    </div>
-
-                    {/* --- Story Options Rendering (keep as is) --- */}
-                    {storyOptions.length > 0 && !isLoading && (
-                <div className="p-4 border-t border-amber-200 bg-amber-50">
-                    {/* En-tête cliquable pour déplier/rétracter */}
-                    <div
-                        // On enlève rainbow-text-effect d'ici
-                        className="flex items-center gap-2 cursor-pointer mb-2 group"
-                        onClick={toggleExpansion}
-                        role="button"
-                        aria-expanded={isExpanded}
-                        aria-controls="story-options-content"
-                        tabIndex={0}
-                        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleExpansion()}
+                <div className="flex items-center justify-center sm:justify-end space-x-2">
+                    <DecisionTreePanel
+                        decisionTree={decisionTree}
+                        isOpen={isTreePanelOpen}
+                        setIsOpen={setIsTreePanelOpen}
                     >
-                        {/* Icône flèche conditionnelle */}
-                        {isExpanded ? (
-                            <ChevronDown
-                                className="h-4 w-4 text-gray-600 flex-shrink-0 transition-transform duration-200"
-                                aria-hidden="true"
-                            />
-                        ) : (
-                            <ChevronRight
-                                // Donne une couleur spécifique à la flèche quand rétracté
-                                // Par exemple, une couleur ambre pour correspondre au thème
-                                className="h-4 w-4 text-amber-600 flex-shrink-0 transition-transform duration-200" // Ajout d'une légère pulsation pour attirer l'œil
-                                aria-hidden="true"
-                            />
-                        )}
-                        {/* Texte "Et maintenant ?" */}
-                        <p className={clsx(
-                            "text-sm font-medium select-none",
-                             // Applique l'effet SEULEMENT au texte si rétracté
-                            !isExpanded && "rainbow-text-effect",
-                             // Utilise la couleur normale si déplié
-                            isExpanded && "text-gray-600"
-                        )}>
-                            Et maintenant ?
-                        </p>
-                    </div>
-
-                    {/* Contenu des options (conditionnel) */}
-                    {isExpanded && (
-                        <div
-                            id="story-options-content"
-                            className="flex flex-col gap-2 mt-2 animate-fade-in"
-                        >
-                            {storyOptions.map((option, index) => (
-                                <Button
-                                    key={index}
-                                    variant="outline"
-                                    className="border-amber-500 text-amber-800 hover:bg-amber-100 justify-start h-auto py-2 px-4 font-normal whitespace-normal text-left transition-colors duration-150 ease-in-out"
-                                    onClick={() => selectOption(option)}
-                                    disabled={isSubmitting || isLoading}
-                                >
-                                    <Sparkles className="h-4 w-4 mr-2 flex-shrink-0 self-start mt-1 text-amber-600" />
-                                    <span className="flex-1 break-words">{option}</span>
-                                </Button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-
-                     <form
-                        onSubmit={handleFormSubmit}
-                        className="p-4 border-t border-amber-200 flex flex-col sm:flex-row gap-2 sm:items-center"
-                    >
-                      <div className="flex gap-2 items-center w-full sm:flex-1">
-                            <Input
-                                value={input}
-                                onChange={handleInputChange}
-                                placeholder={storyOptions.length > 0 ? "Ou écrivez votre propre suite..." : "Commencez ou continuez l'histoire..."}
-                                // flex-1 pour que l'input prenne l'espace disponible dans ce groupe
-                                className="border-amber-300 focus:ring-amber-500 focus:border-amber-500 flex-1 bg-white disabled:bg-gray-100"
-                                disabled={isSubmitting || isLoading}
-                                aria-label="Chat input"
-                            />
-                            <Button type="submit" className="bg-amber-800 hover:bg-amber-700 disabled:opacity-50" disabled={isSubmitting || isLoading || !input.trim()}>
-                                <Send className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <div className="flex items-center justify-center sm:justify-end space-x-2">
+                        <Button
+                            variant="ghost"
+                            title="Arbre narratif"
+                            className="bg-amber-800 hover:bg-amber-700 text-white hover:text-white"
+                            >
+                            <BookOpen className="h-5 w-5" />
+                        </Button>
+                    </DecisionTreePanel>
                             <Button
                                 variant="ghost"
                                 onClick={() => window.location.reload()}
@@ -489,9 +581,15 @@ Vérifie ta réponse avant de la finaliser pour t'assurer qu'elle respecte TOUTE
                                 </Button>
                             </SettingsSheet>
                         </div>
-                    </form>
-                </div>
-            </main>
-        </div>
-    )
+
+            </form>
+           </div>
+
+        {/* Decision Tree Panel definition remains here, but the trigger button is passed from the header */}
+         {/* The <DecisionTreePanel> itself doesn't render anything visible until opened */}
+         {/* Its trigger is now correctly passed as a child in the header section */}
+
+      </main>
+    </div>
+  );
 }
