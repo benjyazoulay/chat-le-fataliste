@@ -4,48 +4,75 @@
 
 @layer base {
   :root {
-    --background: 36 100% 97%;
-    --foreground: 20 14.3% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 20 14.3% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 20 14.3% 4.1%;
-    --primary: 30 67% 28%;
-    --primary-foreground: 60 9.1% 97.8%;
-    --secondary: 60 4.8% 95.9%;
-    --secondary-foreground: 24 9.8% 10%;
-    --muted: 60 4.8% 95.9%;
-    --muted-foreground: 25 5.3% 44.7%;
-    --accent: 43 96% 90%;
-    --accent-foreground: 24 9.8% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 60 9.1% 97.8%;
-    --border: 43 65% 80%;
-    --input: 43 65% 80%;
-    --ring: 30 67% 28%;
-    --radius: 0.5rem;
+    /* Palette inspiree des manuscrits anciens */
+    --background: 40 33% 96%; /* Creme doux #f7f4ef */
+    --foreground: 25 25% 15%; /* Brun encre #2d2720 */
+    
+    --card: 40 40% 98%; /* Parchemin clair */
+    --card-foreground: 25 25% 15%;
+    
+    --popover: 40 40% 98%;
+    --popover-foreground: 25 25% 15%;
+    
+    --primary: 25 55% 30%; /* Brun sepia profond #6b4c35 */
+    --primary-foreground: 40 33% 96%;
+    
+    --secondary: 35 30% 90%; /* Beige sable */
+    --secondary-foreground: 25 25% 20%;
+    
+    --muted: 35 20% 92%;
+    --muted-foreground: 25 15% 45%;
+    
+    --accent: 38 70% 50%; /* Or antique #c9952a */
+    --accent-foreground: 25 25% 15%;
+    
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 40 33% 96%;
+    
+    --border: 35 30% 82%;
+    --input: 35 30% 85%;
+    --ring: 25 55% 35%;
+    
+    --radius: 0.625rem;
+    
+    /* Couleurs supplementaires */
+    --gold: 38 70% 50%;
+    --burgundy: 350 50% 35%;
+    --sepia: 30 40% 45%;
   }
 
   .dark {
-    --background: 20 14.3% 4.1%;
-    --foreground: 60 9.1% 97.8%;
-    --card: 20 14.3% 4.1%;
-    --card-foreground: 60 9.1% 97.8%;
-    --popover: 20 14.3% 4.1%;
-    --popover-foreground: 60 9.1% 97.8%;
-    --primary: 30 67% 58%;
-    --primary-foreground: 24 9.8% 10%;
-    --secondary: 12 6.5% 15.1%;
-    --secondary-foreground: 60 9.1% 97.8%;
-    --muted: 12 6.5% 15.1%;
-    --muted-foreground: 24 5.3% 77.9%;
-    --accent: 12 6.5% 15.1%;
-    --accent-foreground: 60 9.1% 97.8%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 60 9.1% 97.8%;
-    --border: 12 6.5% 15.1%;
-    --input: 12 6.5% 15.1%;
-    --ring: 30 67% 58%;
+    --background: 25 25% 8%; /* Brun nuit #161311 */
+    --foreground: 35 25% 88%; /* Parchemin clair #e5ddd1 */
+    
+    --card: 25 20% 12%;
+    --card-foreground: 35 25% 88%;
+    
+    --popover: 25 20% 12%;
+    --popover-foreground: 35 25% 88%;
+    
+    --primary: 38 60% 55%; /* Or lumineux */
+    --primary-foreground: 25 25% 10%;
+    
+    --secondary: 25 15% 18%;
+    --secondary-foreground: 35 25% 85%;
+    
+    --muted: 25 15% 20%;
+    --muted-foreground: 35 15% 60%;
+    
+    --accent: 38 65% 50%;
+    --accent-foreground: 25 25% 10%;
+    
+    --destructive: 0 55% 45%;
+    --destructive-foreground: 35 25% 90%;
+    
+    --border: 25 15% 22%;
+    --input: 25 15% 22%;
+    --ring: 38 60% 55%;
+    
+    --gold: 38 65% 55%;
+    --burgundy: 350 45% 45%;
+    --sepia: 30 35% 55%;
   }
 }
 
@@ -53,68 +80,297 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    @apply bg-background;
+    scroll-behavior: smooth;
+  }
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+  
+  /* Selection elegante */
+  ::selection {
+    @apply bg-primary/20 text-foreground;
   }
 }
 
-/* Animation Keyframes pour l'arc-en-ciel */
+/* ===== TYPOGRAPHIE ===== */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+/* ===== ANIMATIONS ===== */
+
+/* Effet machine a ecrire */
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: hsl(var(--primary)); }
+}
+
+.typewriter-effect {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid hsl(var(--primary));
+  animation: 
+    typewriter 3s steps(40, end),
+    blink-caret 0.75s step-end infinite;
+}
+
+/* Fondu entrant avec elevation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInFromLeft 0.4s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInFromRight 0.4s ease-out forwards;
+}
+
+/* Stagger pour les listes */
+.stagger-animation > * {
+  opacity: 0;
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.stagger-animation > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-animation > *:nth-child(2) { animation-delay: 75ms; }
+.stagger-animation > *:nth-child(3) { animation-delay: 150ms; }
+.stagger-animation > *:nth-child(4) { animation-delay: 225ms; }
+.stagger-animation > *:nth-child(5) { animation-delay: 300ms; }
+
+/* Animation de pulsation douce */
+@keyframes gentlePulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.animate-gentle-pulse {
+  animation: gentlePulse 2s ease-in-out infinite;
+}
+
+/* Animation de l'indicateur de frappe */
+@keyframes typingDot {
+  0%, 60%, 100% { 
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% { 
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.typing-dot {
+  animation: typingDot 1.4s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Animation plume qui ecrit */
+@keyframes writingQuill {
+  0%, 100% { 
+    transform: rotate(-5deg) translateY(0);
+  }
+  25% { 
+    transform: rotate(5deg) translateY(-2px);
+  }
+  50% { 
+    transform: rotate(-3deg) translateY(0);
+  }
+  75% { 
+    transform: rotate(3deg) translateY(-1px);
+  }
+}
+
+.animate-writing {
+  animation: writingQuill 1.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* ===== EFFETS SPECIAUX ===== */
+
+/* Effet arc-en-ciel pour le texte */
 @keyframes rainbow-background-animation {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-/* Classe pour appliquer l'effet arc-en-ciel au texte et à l'icône */
 .rainbow-text-effect {
-  /* Dégradé de couleurs vives pour l'arc-en-ciel */
   background: linear-gradient(
-    90deg, /* Direction du dégradé */
-    hsl(0, 80%, 65%),   /* Rouge */
-    hsl(30, 80%, 60%),  /* Orange */
-    hsl(60, 80%, 55%),  /* Jaune */
-    hsl(120, 80%, 60%), /* Vert */
-    hsl(180, 80%, 60%), /* Cyan */
-    hsl(240, 80%, 65%), /* Bleu */
-    hsl(300, 80%, 65%), /* Violet */
-    hsl(360, 80%, 65%)  /* Rouge (pour boucler) */
+    90deg,
+    hsl(25, 70%, 45%),
+    hsl(38, 80%, 50%),
+    hsl(25, 70%, 45%),
+    hsl(350, 50%, 45%),
+    hsl(25, 70%, 45%)
   );
-  /* Taille du fond plus grande que l'élément pour permettre le mouvement */
-  background-size: 250% 100%;
-  /* Appliquer l'animation */
+  background-size: 200% 100%;
   animation: rainbow-background-animation 4s linear infinite;
-
-  /* Clipping : le fond n'est visible qu'à travers le texte/icône */
   background-clip: text;
-  -webkit-background-clip: text; /* Support Safari */
-
-  /* Rendre la couleur du texte et de l'icône elle-même transparente */
-  /* Important! pour s'assurer que ça override les couleurs de texte/icône */
+  -webkit-background-clip: text;
   color: transparent !important;
-  -webkit-text-fill-color: transparent; /* Support Safari */
-
-  /* S'assurer que l'icône SVG hérite et applique l'effet correctement */
-  & svg {
-    /* Forcer l'icône à utiliser la couleur 'transparente' définie ci-dessus */
-    /* Cela permet au background-clip de fonctionner sur l'icône */
-    color: currentColor !important; /* Utilise la couleur héritée (transparente) */
-    fill: currentColor !important; /* Appliquer aux remplissages SVG si nécessaire */
-    stroke: currentColor !important; /* Appliquer aux traits SVG si nécessaire */
-    /* Parfois, rendre le fill/stroke explicitement transparents aide aussi */
-    /* fill: transparent !important; */
-    /* stroke: transparent !important; */
-  }
+  -webkit-text-fill-color: transparent;
 }
 
-/* Animation simple de fondu enchaîné pour l'apparition du contenu */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Effet de brillance sur hover */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+.shimmer-effect {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--gold) / 0.3) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
 }
 
-/* Optionnel : Ajoute une petite transition sur la rotation de la flèche */
-/* (Déjà ajouté via les classes `transition-transform duration-200` dans le JSX) */
+/* ===== SCROLLBAR PERSONNALISEE ===== */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) hsl(var(--muted));
+}
+
+/* ===== EFFETS DE FOND ===== */
+
+/* Texture papier subtile */
+.paper-texture {
+  background-image: 
+    radial-gradient(ellipse at 20% 30%, hsl(var(--accent) / 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, hsl(var(--primary) / 0.03) 0%, transparent 50%);
+}
+
+/* Bordure decorative */
+.decorative-border {
+  position: relative;
+}
+
+.decorative-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* ===== TRANSITIONS GLOBALES ===== */
+.transition-theme {
+  transition: 
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* ===== FOCUS VISIBLE ===== */
+.focus-ring {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* ===== GLASS EFFECT ===== */
+.glass {
+  background: hsl(var(--card) / 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ===== MESSAGE BUBBLES ===== */
+.message-bubble-user {
+  @apply bg-primary/10 border border-primary/20;
+  border-radius: 1rem 1rem 0.25rem 1rem;
+}
+
+.message-bubble-assistant {
+  @apply bg-card border border-border;
+  border-radius: 1rem 1rem 1rem 0.25rem;
+}
