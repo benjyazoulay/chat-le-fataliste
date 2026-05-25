@@ -9,7 +9,7 @@ import { StoryOptions } from "@/components/chat/story-options";
 import { SettingsSheet } from "@/components/ui/settings-drawer";
 import { DecisionTreePanel } from "@/components/ui/decision-tree-panel";
 import { useToast } from "@/hooks/use-toast";
-import { useChat } from "ai/react";
+import { useChat, Message } from "ai/react";
 import { useDecisionTree } from "@/hooks/use-decision-tree";
 import jsPDF from "jspdf";
 import { DECISION_TREE_STORAGE_KEY } from "@/lib/decision-tree-types";
@@ -41,6 +41,10 @@ export default function Chat() {
     decisionTree,
     addBotMessage,
     selectOption,
+    navigateToNode,
+    getCurrentPath,
+    getMessagesFromPath,
+    getOptionsForNode,
     resetDecisionTree,
     isTreePanelOpen,
     setIsTreePanelOpen,
@@ -70,6 +74,37 @@ export default function Chat() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [isOptionsExpanded, setIsOptionsExpanded] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Generate system message content
+  const generateSystemMessage = useCallback(() => {
+    return `
+Tu es un maitre ecrivain charge de generer une histoire interactive.
+Ta mission ABSOLUE est de te conformer STRICTEMENT aux directives suivantes :
+
+1.  **STYLE LITTERAIRE IMPERATIF :** Adopte *uniquement* et *precisement* le style litteraire de **${literaryStyle}**. Chaque phrase doit refleter ce style. Definition: "${styleDescription}". NE PAS devier.
+2.  **GENRE LITTERAIRE IMPERATIF :** L'histoire doit etre *exclusivement* de type **${literaryGenre}**, defini comme : "${genreDescription}". Respecte ce genre a chaque instant.
+3.  **RELATION NARRATEUR/HISTOIRE IMPERATIVE (Voix) :** Le narrateur doit etre **${narratorRelation}**. Cela signifie : "${narratorRelationDescription}". Respecte ce positionnement.
+4.  **FOCALISATION IMPERATIVE (Perspective) :** La perspective narrative doit etre **${focalization}**. Cela signifie : "${focalizationDescription}". Respecte ce point de vue.
+5.  **PERSONNE NARRATIVE IMPERATIVE :** La narration doit utiliser la **${narrativePerson}**. Cela signifie : "${narrativePersonDescription}". Respecte ce choix grammatical.
+6.  **TEMPS NARRATIF IMPERATIF :** Le temps principal de la narration doit etre le **${narrativeTense}**. Cela signifie : "${narrativeTenseDescription}". Respecte ce temps dominant.
+7.  **PERSONNALITE DU NARRATEUR IMPERATIVE :** Le narrateur doit incarner la personnalite **${narratorPersonality}**, decrite comme : "${personalityDescription}". Son ton et ses remarques (si permises par la relation et la focalisation) doivent correspondre.
+8.  **INTERDICTION FORMELLE D'INTERACTION DIRECTE :** NE JAMAIS, sous aucun pretexte, t'adresser au lecteur/utilisateur avec des phrases comme "Que choisissez-vous ?", "Et vous, lecteur...", "Imaginez que...", ou des questions directes sur ses intentions. Le recit doit rester immersif.
+9.  **INTERDICTION FORMELLE DE QUESTIONS :** NE JAMAIS poser de questions directes a l'utilisateur a la fin de ta reponse ou ailleurs.
+10. **PROPOSITION D'OPTIONS NARRATIVES :** A la *toute fin* de CHAQUE reponse, propose 2 ou 3 options narratives claires et distinctes pour la suite de l'histoire.
+11. **FORMAT DES OPTIONS :** Presente ces options UNIQUEMENT sous forme de liste numerotee (1., 2., 3.). Chaque option doit etre une phrase complete decrivant une action ou un developpement potentiel. N'ajoute AUCUNE phrase d'introduction avant la liste (pas de "Voici les options:", "Que faire ensuite:", etc.). Commence directement par "1. ...".
+12. **CONTENU DU RECIT :** Concentre-toi sur l'avancement de l'histoire, les descriptions, les pensees des personnages (si la focalisation le permet), et les evenements, tout en respectant le style, le genre, la voix, la perspective, la personne, le temps et la personnalite definis.
+
+Verifie ta reponse avant de la finaliser pour t'assurer qu'elle respecte TOUTES ces instructions a la lettre.
+    `;
+  }, [
+    literaryStyle, styleDescription,
+    narratorPersonality, personalityDescription,
+    literaryGenre, genreDescription,
+    narratorRelation, narratorRelationDescription,
+    focalization, focalizationDescription,
+    narrativePerson, narrativePersonDescription,
+    narrativeTense, narrativeTenseDescription,
+  ]);
 
   // Load settings from localStorage
   const loadSettings = useCallback(() => {
@@ -145,6 +180,31 @@ export default function Chat() {
     window.location.reload();
   }, [loadSettings, toast]);
 
+  // Parse options from bot message
+  const parseOptionsFromMessage = useCallback((content: string): { cleanedContent: string; options: string[] } => {
+    const options: string[] = [];
+    const optionRegex = /\d+\.\s+(.*?)(?=\n\d+\.|\n\n|$)/gs;
+    let match;
+    let cleanedContent = content;
+
+    while ((match = optionRegex.exec(content)) !== null) {
+      if (match[1]) {
+        options.push(match[1].trim());
+        cleanedContent = cleanedContent.replace(match[0], "").trim();
+      }
+    }
+
+    cleanedContent = cleanedContent.replace(/Que (?:voulez|souhaitez|preferez)[^?]*\?/gi, "");
+    cleanedContent = cleanedContent.replace(/Que (?:choisissez|decidez)[^?]*\?/gi, "");
+    cleanedContent = cleanedContent.replace(/(?:Voici|Voila)(?: quelques)? options[^:]*:/gi, "");
+    cleanedContent = cleanedContent.replace(/(?:Choisissez|Selectionnez)[^:]*:/gi, "");
+    cleanedContent = cleanedContent.replace(/Mais peut-etre est-ce vous, lecteur[^.]*\./gi, "");
+    cleanedContent = cleanedContent.replace(/[^.]*lecteur[^.]*\./gi, "");
+    cleanedContent = cleanedContent.replace(/\n\s*\n\s*\n/g, "\n\n").trim();
+
+    return { cleanedContent: cleanedContent || content, options };
+  }, []);
+
   // Initialize chat with AI SDK
   const { messages, input, handleInputChange, handleSubmit, setMessages, append, isLoading } = useChat({
     api: "/api/chat",
@@ -163,41 +223,22 @@ export default function Chat() {
     initialMessages: [],
     onFinish: (message) => {
       setIsSubmitting(false);
-      const lastMessageContent = message.content;
-      const options: string[] = [];
-      const optionRegex = /\d+\.\s+(.*?)(?=\n\d+\.|\n\n|$)/gs;
-      let match;
-      let cleanedContent = lastMessageContent;
+      const { cleanedContent, options } = parseOptionsFromMessage(message.content);
 
-      while ((match = optionRegex.exec(lastMessageContent)) !== null) {
-        if (match[1]) {
-          options.push(match[1].trim());
-          cleanedContent = cleanedContent.replace(match[0], "").trim();
-        }
-      }
-
-      cleanedContent = cleanedContent.replace(/Que (?:voulez|souhaitez|preferez)[^?]*\?/gi, "");
-      cleanedContent = cleanedContent.replace(/Que (?:choisissez|decidez)[^?]*\?/gi, "");
-      cleanedContent = cleanedContent.replace(/(?:Voici|Voila)(?: quelques)? options[^:]*:/gi, "");
-      cleanedContent = cleanedContent.replace(/(?:Choisissez|Selectionnez)[^:]*:/gi, "");
-      cleanedContent = cleanedContent.replace(/Mais peut-etre est-ce vous, lecteur[^.]*\./gi, "");
-      cleanedContent = cleanedContent.replace(/[^.]*lecteur[^.]*\./gi, "");
-      cleanedContent = cleanedContent.replace(/\n\s*\n\s*\n/g, "\n\n").trim();
-
-      if (options.length > 0 || !lastMessageContent.match(/\d+\.\s+/)) {
-        addBotMessage(cleanedContent || lastMessageContent, options);
+      if (options.length > 0 || !message.content.match(/\d+\.\s+/)) {
+        addBotMessage(cleanedContent, options);
       }
 
       setStoryOptions(options);
 
-      if (cleanedContent !== lastMessageContent && messages.length > 0) {
+      if (cleanedContent !== message.content && messages.length > 0) {
         setMessages((prevMessages) => {
           const updatedMessages = [...prevMessages];
           const lastAssistantIndex = updatedMessages.map((m) => m.role).lastIndexOf("assistant");
           if (lastAssistantIndex !== -1) {
             updatedMessages[lastAssistantIndex] = {
               ...updatedMessages[lastAssistantIndex],
-              content: cleanedContent || lastMessageContent,
+              content: cleanedContent,
             };
           }
           return updatedMessages;
@@ -208,7 +249,7 @@ export default function Chat() {
       setIsSubmitting(false);
       toast({
         title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la communication avec l&apos;API.",
+        description: error.message || "Une erreur est survenue lors de la communication avec l'API.",
         variant: "destructive",
       });
     },
@@ -232,30 +273,10 @@ export default function Chat() {
       }
       setIsFirstMessage(false);
 
-      const systemMessageContent = `
-Tu es un maitre ecrivain charge de generer une histoire interactive.
-Ta mission ABSOLUE est de te conformer STRICTEMENT aux directives suivantes :
-
-1.  **STYLE LITTERAIRE IMPERATIF :** Adopte *uniquement* et *precisement* le style litteraire de **${literaryStyle}**. Chaque phrase doit refleter ce style. Definition: "${styleDescription}". NE PAS devier.
-2.  **GENRE LITTERAIRE IMPERATIF :** L'histoire doit etre *exclusivement* de type **${literaryGenre}**, defini comme : "${genreDescription}". Respecte ce genre a chaque instant.
-3.  **RELATION NARRATEUR/HISTOIRE IMPERATIVE (Voix) :** Le narrateur doit etre **${narratorRelation}**. Cela signifie : "${narratorRelationDescription}". Respecte ce positionnement.
-4.  **FOCALISATION IMPERATIVE (Perspective) :** La perspective narrative doit etre **${focalization}**. Cela signifie : "${focalizationDescription}". Respecte ce point de vue.
-5.  **PERSONNE NARRATIVE IMPERATIVE :** La narration doit utiliser la **${narrativePerson}**. Cela signifie : "${narrativePersonDescription}". Respecte ce choix grammatical.
-6.  **TEMPS NARRATIF IMPERATIF :** Le temps principal de la narration doit etre le **${narrativeTense}**. Cela signifie : "${narrativeTenseDescription}". Respecte ce temps dominant.
-7.  **PERSONNALITE DU NARRATEUR IMPERATIVE :** Le narrateur doit incarner la personnalite **${narratorPersonality}**, decrite comme : "${personalityDescription}". Son ton et ses remarques (si permises par la relation et la focalisation) doivent correspondre.
-8.  **INTERDICTION FORMELLE D'INTERACTION DIRECTE :** NE JAMAIS, sous aucun pretexte, t'adresser au lecteur/utilisateur avec des phrases comme "Que choisissez-vous ?", "Et vous, lecteur...", "Imaginez que...", ou des questions directes sur ses intentions. Le recit doit rester immersif.
-9.  **INTERDICTION FORMELLE DE QUESTIONS :** NE JAMAIS poser de questions directes a l'utilisateur a la fin de ta reponse ou ailleurs.
-10. **PROPOSITION D'OPTIONS NARRATIVES :** A la *toute fin* de CHAQUE reponse, propose 2 ou 3 options narratives claires et distinctes pour la suite de l'histoire.
-11. **FORMAT DES OPTIONS :** Presente ces options UNIQUEMENT sous forme de liste numerotee (1., 2., 3.). Chaque option doit etre une phrase complete decrivant une action ou un developpement potentiel. N'ajoute AUCUNE phrase d'introduction avant la liste (pas de "Voici les options:", "Que faire ensuite:", etc.). Commence directement par "1. ...".
-12. **CONTENU DU RECIT :** Concentre-toi sur l'avancement de l'histoire, les descriptions, les pensees des personnages (si la focalisation le permet), et les evenements, tout en respectant le style, le genre, la voix, la perspective, la personne, le temps et la personnalite definis.
-
-Verifie ta reponse avant de la finaliser pour t'assurer qu'elle respecte TOUTES ces instructions a la lettre.
-      `;
-
       const systemMessage = {
         id: `system-${Date.now()}`,
         role: "system" as const,
-        content: systemMessageContent,
+        content: generateSystemMessage(),
       };
 
       setMessages([systemMessage]);
@@ -267,20 +288,92 @@ Verifie ta reponse avant de la finaliser pour t'assurer qu'elle respecte TOUTES 
     apiKey,
     isFirstMessage,
     setMessages,
-    literaryStyle,
+    generateSystemMessage,
     styleDescription,
-    narratorPersonality,
     personalityDescription,
-    literaryGenre,
     genreDescription,
-    narratorRelation,
     narratorRelationDescription,
-    focalization,
     focalizationDescription,
-    narrativePerson,
     narrativePersonDescription,
-    narrativeTense,
     narrativeTenseDescription,
+  ]);
+
+  // Handle navigation to a different branch in the tree
+  const handleNavigateToNode = useCallback((nodeId: string) => {
+    const node = decisionTree.nodes[nodeId];
+    if (!node) return;
+
+    // Navigate in the tree
+    navigateToNode(nodeId);
+
+    // Rebuild messages from this path
+    const pathMessages = getMessagesFromPath(nodeId);
+    
+    // Create new messages array with system message + path messages
+    const systemMessage: Message = {
+      id: `system-${Date.now()}`,
+      role: "system" as const,
+      content: generateSystemMessage(),
+    };
+
+    const newMessages: Message[] = [systemMessage];
+    
+    pathMessages.forEach((msg, index) => {
+      newMessages.push({
+        id: `msg-${Date.now()}-${index}`,
+        role: msg.role,
+        content: msg.content,
+      });
+    });
+
+    setMessages(newMessages);
+
+    // Update story options based on the current position
+    // If we navigated to an option, look for its children (should be bot messages with options)
+    // If we navigated to a bot message, get its options
+    if (node.isOption) {
+      // Check if this option has children (bot responses)
+      const botChildId = node.children.find(childId => {
+        const child = decisionTree.nodes[childId];
+        return child && !child.isOption;
+      });
+
+      if (botChildId) {
+        const botChild = decisionTree.nodes[botChildId];
+        if (botChild) {
+          const options = getOptionsForNode(botChildId);
+          setStoryOptions(options.map(o => o.content));
+        }
+      } else {
+        // No bot response yet for this option, need to generate one
+        setStoryOptions([]);
+        setIsSubmitting(true);
+        // The message is already in the chat, so we append a request for continuation
+        append({ role: "user", content: node.content });
+      }
+    } else {
+      // It's a bot message, get its options
+      const options = getOptionsForNode(nodeId);
+      setStoryOptions(options.map(o => o.content));
+    }
+
+    // Close the panel
+    setIsTreePanelOpen(false);
+
+    toast({
+      title: "Navigation dans l'histoire",
+      description: "Vous explorez maintenant une autre branche narrative.",
+    });
+  }, [
+    decisionTree.nodes,
+    navigateToNode,
+    getMessagesFromPath,
+    getOptionsForNode,
+    generateSystemMessage,
+    setMessages,
+    append,
+    setIsTreePanelOpen,
+    toast,
   ]);
 
   // Handlers
@@ -288,7 +381,7 @@ Verifie ta reponse avant de la finaliser pour t'assurer qu'elle respecte TOUTES 
     if (isSubmitting || isLoading) return;
     setIsSubmitting(true);
     setStoryOptions([]);
-    selectOption(option);
+    selectOption(option, false);
     append({ role: "user", content: option });
   };
 
@@ -303,8 +396,14 @@ Verifie ta reponse avant de la finaliser pour t'assurer qu'elle respecte TOUTES 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmitting || isLoading || !input.trim()) return;
+    
+    const customInput = input.trim();
     setIsSubmitting(true);
     setStoryOptions([]);
+    
+    // Mark as custom option in the tree
+    selectOption(customInput, true);
+    
     handleSubmit(e);
   };
 
@@ -364,12 +463,16 @@ Verifie ta reponse avant de la finaliser pour t'assurer qu'elle respecte TOUTES 
     doc.save("Chat_le_Fataliste_Recit.pdf");
   };
 
+  const currentPath = getCurrentPath();
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <DecisionTreePanel
         decisionTree={decisionTree}
         isOpen={isTreePanelOpen}
         setIsOpen={setIsTreePanelOpen}
+        onNavigateToNode={handleNavigateToNode}
+        currentPath={currentPath}
       >
         <span />
       </DecisionTreePanel>
