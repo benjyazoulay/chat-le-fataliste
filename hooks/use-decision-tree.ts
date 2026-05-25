@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { DecisionTree, DecisionNode, DECISION_TREE_STORAGE_KEY } from "@/lib/decision-tree-types";
-import { v4 as uuidv4 } from 'uuid'; // Il faudra installer cette dépendance
+import { v4 as uuidv4 } from 'uuid';
 
-// Hook personnalisé pour gérer l'arbre de décision
 export function useDecisionTree() {
-  // État local de l'arbre de décision
   const [decisionTree, setDecisionTree] = useState<DecisionTree>({
     nodes: {},
     rootId: null,
@@ -12,7 +10,6 @@ export function useDecisionTree() {
     sessionId: uuidv4()
   });
   
-  // État pour le panneau latéral
   const [isTreePanelOpen, setIsTreePanelOpen] = useState(false);
   
   // Charger l'arbre de décision depuis le localStorage au démarrage
@@ -24,7 +21,6 @@ export function useDecisionTree() {
         setDecisionTree(parsedTree);
       } catch (e) {
         console.error("Erreur lors du chargement de l'arbre de décision:", e);
-        // Si erreur, on réinitialise
         resetDecisionTree();
       }
     }
@@ -32,31 +28,28 @@ export function useDecisionTree() {
   
   // Sauvegarder l'arbre dans le localStorage quand il change
   useEffect(() => {
-    if (decisionTree.rootId) { // Seulement si l'arbre a été initialisé
+    if (decisionTree.rootId) {
       localStorage.setItem(DECISION_TREE_STORAGE_KEY, JSON.stringify(decisionTree));
     }
   }, [decisionTree]);
   
   // Ajouter un message du bot à l'arbre
-  // Ajouter un message du bot à l'arbre
   const addBotMessage = useCallback((content: string, options: string[]) => {
     setDecisionTree(prevTree => {
       const newNodeId = uuidv4();
       const timestamp = Date.now();
-      const parentId = prevTree.currentNodeId; // The ID of the previously selected option (or null for root)
+      const parentId = prevTree.currentNodeId;
 
-      // Créer le nouveau nœud pour le message du bot
       const newNode: DecisionNode = {
         id: newNodeId,
         content,
-        parentId: parentId, // Correctly set
+        parentId: parentId,
         children: [],
-        isSelected: true, // Bot messages are part of the main path initially
+        isSelected: true,
         isOption: false,
         timestamp
       };
 
-      // Créer des nœuds pour chaque option proposée
       const optionNodes: Record<string, DecisionNode> = {};
       const optionIds: string[] = [];
 
@@ -67,7 +60,7 @@ export function useDecisionTree() {
         optionNodes[optionId] = {
           id: optionId,
           content: option,
-          parentId: newNodeId, // Options belong to the new bot message
+          parentId: newNodeId,
           children: [],
           isSelected: false,
           isOption: true,
@@ -75,58 +68,65 @@ export function useDecisionTree() {
         };
       });
 
-      // Mettre à jour le nœud du bot avec les options
       newNode.children = optionIds;
 
-      // --- START CORRECTION ---
-      // Créer un nouvel arbre avec tous les nouveaux nœuds
       const updatedNodes = {
         ...prevTree.nodes,
         [newNodeId]: newNode,
         ...optionNodes
       };
 
-      // **Crucially, update the parent node (the selected option) to include this new bot message as a child**
       if (parentId && updatedNodes[parentId]) {
         const parentNode = updatedNodes[parentId];
-        // Ensure children array exists and doesn't already include the newNodeId
         if (!parentNode.children.includes(newNodeId)) {
-            updatedNodes[parentId] = {
-              ...parentNode,
-              children: [...parentNode.children, newNodeId],
-            };
+          updatedNodes[parentId] = {
+            ...parentNode,
+            children: [...parentNode.children, newNodeId],
+          };
         }
       }
-      // --- END CORRECTION ---
 
-      // Si c'est le premier message, définir comme racine
       const rootId = prevTree.rootId || newNodeId;
 
-      // Mettre à jour l'état
       return {
         ...prevTree,
         nodes: updatedNodes,
         rootId,
-        currentNodeId: newNodeId // The new bot message becomes the current node
+        currentNodeId: newNodeId
       };
     });
   }, []);
   
-  // Ajouter un choix utilisateur à l'arbre
-  const selectOption = useCallback((optionContent: string) => {
+  // Sélectionner une option (existante ou personnalisée)
+  const selectOption = useCallback((optionContent: string, isCustom: boolean = false) => {
     setDecisionTree(prevTree => {
       if (!prevTree.currentNodeId) return prevTree;
       
-      // Trouver l'option correspondante parmi les enfants du nœud courant
       const currentNode = prevTree.nodes[prevTree.currentNodeId];
-      const optionNode = Object.values(prevTree.nodes)
+      
+      // Chercher si l'option existe déjà
+      const existingOption = Object.values(prevTree.nodes)
         .find(node => 
           node.parentId === currentNode.id && 
-          node.content === optionContent
+          node.content === optionContent &&
+          node.isOption
         );
       
-      if (!optionNode) {
-        // Option non trouvée, créons-en une nouvelle
+      if (existingOption) {
+        // Option trouvée, la marquer comme sélectionnée
+        return {
+          ...prevTree,
+          nodes: {
+            ...prevTree.nodes,
+            [existingOption.id]: {
+              ...existingOption,
+              isSelected: true
+            }
+          },
+          currentNodeId: existingOption.id
+        };
+      } else {
+        // Nouvelle option (personnalisée), l'ajouter à l'arbre
         const newOptionId = uuidv4();
         const newOption: DecisionNode = {
           id: newOptionId,
@@ -135,10 +135,10 @@ export function useDecisionTree() {
           children: [],
           isSelected: true,
           isOption: true,
+          isCustom: isCustom,
           timestamp: Date.now()
         };
         
-        // Mettre à jour les enfants du nœud courant
         const updatedCurrentNode = {
           ...currentNode,
           children: [...currentNode.children, newOptionId]
@@ -153,22 +153,102 @@ export function useDecisionTree() {
           },
           currentNodeId: newOptionId
         };
-      } else {
-        // Option trouvée, la marquer comme sélectionnée
-        return {
-          ...prevTree,
-          nodes: {
-            ...prevTree.nodes,
-            [optionNode.id]: {
-              ...optionNode,
-              isSelected: true
-            }
-          },
-          currentNodeId: optionNode.id
-        };
       }
     });
   }, []);
+
+  // Naviguer vers un nœud spécifique (pour revenir en arrière)
+  const navigateToNode = useCallback((nodeId: string) => {
+    setDecisionTree(prevTree => {
+      const node = prevTree.nodes[nodeId];
+      if (!node) return prevTree;
+
+      // Si c'est une option, on la sélectionne
+      if (node.isOption) {
+        // Désélectionner les autres options du même parent
+        const updatedNodes = { ...prevTree.nodes };
+        const parentNode = node.parentId ? prevTree.nodes[node.parentId] : null;
+        
+        if (parentNode) {
+          parentNode.children.forEach(childId => {
+            const child = updatedNodes[childId];
+            if (child && child.isOption && child.id !== nodeId) {
+              updatedNodes[childId] = { ...child, isSelected: false };
+            }
+          });
+        }
+        
+        // Sélectionner cette option
+        updatedNodes[nodeId] = { ...node, isSelected: true };
+        
+        return {
+          ...prevTree,
+          nodes: updatedNodes,
+          currentNodeId: nodeId
+        };
+      }
+      
+      // Si c'est un message bot, on y navigue simplement
+      return {
+        ...prevTree,
+        currentNodeId: nodeId
+      };
+    });
+  }, []);
+
+  // Obtenir le chemin actuel depuis la racine
+  const getCurrentPath = useCallback((): string[] => {
+    const path: string[] = [];
+    let currentId = decisionTree.currentNodeId;
+    
+    while (currentId) {
+      path.unshift(currentId);
+      const node = decisionTree.nodes[currentId];
+      currentId = node?.parentId || null;
+    }
+    
+    return path;
+  }, [decisionTree]);
+
+  // Obtenir les messages pour reconstruire le chat depuis un nœud
+  const getMessagesFromPath = useCallback((targetNodeId: string): Array<{role: 'user' | 'assistant', content: string}> => {
+    const messages: Array<{role: 'user' | 'assistant', content: string}> = [];
+    const path: DecisionNode[] = [];
+    
+    // Construire le chemin depuis la racine jusqu'au nœud cible
+    let currentId: string | null = targetNodeId;
+    while (currentId) {
+      const node = decisionTree.nodes[currentId];
+      if (node) {
+        path.unshift(node);
+        currentId = node.parentId;
+      } else {
+        break;
+      }
+    }
+    
+    // Convertir le chemin en messages
+    path.forEach(node => {
+      if (node.isOption) {
+        messages.push({ role: 'user', content: node.content });
+      } else {
+        messages.push({ role: 'assistant', content: node.content });
+      }
+    });
+    
+    return messages;
+  }, [decisionTree]);
+
+  // Obtenir les options disponibles pour un nœud de message bot
+  const getOptionsForNode = useCallback((nodeId: string): DecisionNode[] => {
+    const node = decisionTree.nodes[nodeId];
+    if (!node || node.isOption) return [];
+    
+    return node.children
+      .map(childId => decisionTree.nodes[childId])
+      .filter((child): child is DecisionNode => child !== undefined && child.isOption)
+      .sort((a, b) => a.timestamp - b.timestamp);
+  }, [decisionTree]);
   
   // Réinitialiser l'arbre de décision
   const resetDecisionTree = useCallback(() => {
@@ -187,6 +267,10 @@ export function useDecisionTree() {
     decisionTree,
     addBotMessage,
     selectOption,
+    navigateToNode,
+    getCurrentPath,
+    getMessagesFromPath,
+    getOptionsForNode,
     resetDecisionTree,
     isTreePanelOpen,
     setIsTreePanelOpen
